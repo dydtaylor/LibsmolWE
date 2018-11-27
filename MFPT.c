@@ -55,7 +55,7 @@ struct paramsOUDynamicsEngine paramsDeOu;
 struct replicas Reps;
 FILE *errFile;
 
-void initialDistOU(int nInit){
+void initialDist(int nInit){
 	int jSim;
 	double lowBounds[] = {-paramsDeOu.worldLength/2,-paramsDeOu.worldLength/2};
 	double highBounds[] = {paramsDeOu.worldLength/2, paramsDeOu.worldLength/2};
@@ -101,7 +101,17 @@ void dynamicsEngine(){
 }
 
 int findBin(){
-	
+	int nInBin;
+	double molX, molY;
+	nInBin = 0;
+	for(nMol = 0; nMol < paramsDeOu.nPart; nMol++){
+		molX = Reps.sims[jSim]->mols->live[0][nMol]->pos[0]; //first index changes based on how we org mols
+		molY = Reps.sims[jSim]->mols->live[0][nMol]->pos[1];
+		if(molX^2 + molY^2 < paramsDeOu.roiR){ //Needs to be changed to deal with varying ROIs
+			nInBin++;
+		}
+	}
+	return nInBin;
 }
 
 void splitMerge(){
