@@ -1,6 +1,3 @@
-#include "mfpt.h"
-
-
 void initialDist(int nInit){
 	int jSim;
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
@@ -37,10 +34,21 @@ void initialDist(int nInit){
 	}
 }
 
-void dynamicsEngine(simptr currentSim){
-	double currentT, breakT;
-	
-	currentT = currentSim->time;
-	breakT = currentT + paramsWe.tau*paramsDe.dt;
-	smolRunSimUntil(currentSim, breakT);
+void dynamicsEngine(simptr currentSim){	
+	smolRunSimUntil(currentSim, currentSim->time + paramsWe.tau*paramsDe.dt);
+}
+
+int findBin(simptr currentSim){
+	int nInBin, nMol;
+	double molX, molY;
+	nInBin = 0;
+	for(nMolList = 0; nMolList < maxlist;++){
+	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
+		molX = currentSim->mols->live[0][nMol]->pos[0]; //first index changes based on how we org mol lists
+		molY = currentSim->mols->live[0][nMol]->pos[1];
+		if((pow(molX,2) + pow(molY,2)) < paramsDe.roiR*paramsDe.roiR){ //molX*molX might be faster
+			nInBin++;
+		}
+	}
+	return nInBin;
 }

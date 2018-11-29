@@ -1,18 +1,5 @@
+#include "weSmoldyn.h"
 #include "smolDynamics.c"
-
-int findBin(simptr currentSim){
-	int nInBin, nMol;
-	double molX, molY;
-	nInBin = 0;
-	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
-		molX = currentSim->mols->live[0][nMol]->pos[0]; //first index changes based on how we org mol lists
-		molY = currentSim->mols->live[0][nMol]->pos[1];
-		if((pow(molX,2) + pow(molY,2)) < paramsDe.roiR){
-			nInBin++;
-		}
-	}
-	return nInBin;
-}
 
 void splitMerge(){
 	int binMin = 0;
@@ -148,7 +135,7 @@ void splitMerge(){
 					splitInd = dummyInd;
 				}
 			}
-			Reps.sims[Reps.iSimMax+1] = Reps.sims[splitInd];
+			Reps.sims[Reps.iSimMax+1] = Reps.sims[splitInd]; //Needs to create a new Sim, this just copies a pointer which will never work
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax+1] = Reps.weights[splitInd];
 			Reps.binLocs[Reps.iSimMax+1] = Reps.binLocs[splitInd];
