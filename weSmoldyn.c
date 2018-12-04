@@ -259,6 +259,7 @@ int main(int argc, char *argv[]){
 		}
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 			printf("\n \n \n sim = %i \n \n \n",iSim);
+			printf("%f \n",Reps.sims[0]->time);
 			dynamicsEngine(Reps.sims[iSim]);
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
