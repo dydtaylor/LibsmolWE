@@ -1,7 +1,8 @@
 #include "weSmoldyn.h"
 #include "smolDynamics.c"
+#include "smolSimCopy.c"
 
-void splitMerge(){
+void splitMerge(int nWE){
 	int binMin = 0;
 	int binMax = Reps.nBins;
 	unsigned int dummyInd;/*Just a dummy index that will hold the current index location in both split and merge loop*/
@@ -103,11 +104,12 @@ void splitMerge(){
 			Reps.weights[keptInd[1]] = Reps.weights[Reps.iSimMax];
 			Reps.binLocs[keptInd[1]] = Reps.binLocs[Reps.iSimMax];
 
-			//Setting things to NAN is technically unnecessary
-			/*Remove the duplicate non-NAN simulation at the end of the non-NANs
-			Reps.sims[Reps.iSimMax] = NAN;*/
+			//Setting things to NAN is technically unnecessary. Freeing Sim Saves much memory.
+			printf("\n \n Kept Sim: %i (%i) \n Lost Sim: %i (%i) \n iSimMax: %i \n \n ", keptInd[0], mergeInd[0], keptInd[1], mergeInd[1], Reps.iSimMax);
+			smolFreeSim(Reps.sims[Reps.iSimMax]);
 			Reps.weights[Reps.iSimMax] = NAN;
 			Reps.binLocs[Reps.iSimMax] = NAN;
+			liveIndices[Reps.iSimMax] = 0;
 			Reps.iSimMax--;
 
 			/*Reorganize the binContents matrix*/
@@ -121,6 +123,9 @@ void splitMerge(){
 						//fprintf(errFile, "ERROR: Duplicate entries in BC \n");
 					}
 				} // finished j loop through this bin's contents
+		if(fabs(nWE*paramsDe.dt-Reps.sims[0]->time)>1e-5){
+			printf("Err");
+		}
 			} // finished i loop through this bin's contents
 		} // finished while-loop to check this bin
 	} // finished merging loop through bins
@@ -135,10 +140,12 @@ void splitMerge(){
 					splitInd = dummyInd;
 				}
 			}
-			Reps.sims[Reps.iSimMax+1] = Reps.sims[splitInd]; //Needs to create a new Sim, this just copies a pointer which will never work
+			printf("Split index: %i \n", splitInd);
+			copySim1(splitInd,Reps.iSimMax+1); //Needs to create a new Sim, this just copies a pointer which will never work
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax+1] = Reps.weights[splitInd];
 			Reps.binLocs[Reps.iSimMax+1] = Reps.binLocs[splitInd];
+			liveIndices[Reps.iSimMax+1] = 1;
 			Reps.iSimMax++;
 			if(Reps.iSimMax > ISIMMAXMAX){
 				printf("ERROR: iSimMax out of bounds");
@@ -171,7 +178,7 @@ double fluxes(){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 			 // JUN COMMENT: Is this a validation check? Shouldn't all these be in the fluxbin?
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]]; // JUN COMMENT: Use += notation?
-				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[Reps.iSimMax];
+				copySim1(Reps.iSimMax, Reps.binContents[iReps][paramsWe.fluxBin]);
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];
 
@@ -182,7 +189,7 @@ double fluxes(){
 					}
 				}
 
-				//Reps.sims[Reps.iSimMax] = NAN;
+				smolFreeSim(Reps.sims[Reps.iSimMax]);
 				Reps.weights[Reps.iSimMax] = NAN;
 				Reps.binLocs[Reps.iSimMax] = NAN;
 				Reps.iSimMax--;
@@ -207,7 +214,7 @@ double fluxes(){
 }
 
 int main(int argc, char *argv[]){
-	int tauQuarter, tauMax, rngBit, iBin, nWE;
+	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
 	
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile;
 	DEFile = fopen("dynamicsParams.txt","r");
@@ -217,9 +224,10 @@ int main(int argc, char *argv[]){
 	fscanf(WEFile,"%i %i %i %i", &paramsWe.tau, &paramsWe.repsPerBin, &paramsWe.tauMax, &paramsWe.nBins);
 	fscanf(DEFile, "%lf %lf %lf %lf %i", &paramsDe.dt, &paramsDe.worldLength, &paramsDe.roiR, &paramsDe.difC, &paramsDe.nPart);
 	paramsWe.fluxBin = 0;
-	Reps.iSimMax = paramsWe.repsPerBin;
+	Reps.iSimMax = paramsWe.repsPerBin -1;
 	fclose(DEFile);
 	fclose(WEFile);
+	Reps.nBins = paramsWe.nBins;
 
 	printf("Parameters loaded\n");
 
@@ -232,17 +240,24 @@ int main(int argc, char *argv[]){
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
     fclose(errFile);
 	initialDist(paramsWe.repsPerBin);
+	for(iSim = 0; iSim < paramsWe.repsPerBin; iSim++){
+		Reps.weights[iSim] = (double)1/paramsWe.repsPerBin;
+		Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
+		Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
+		Reps.binContentsMax[Reps.binLocs[iSim]]++;
+	}
 
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
 	
+	
 	for(nWE = 0; nWE < tauQuarter; nWE++){
 		printf("Tau Step: %i \n", nWE);
-		splitMerge();
+		splitMerge(nWE);
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
-		for(int iSim = 0; iSim < Reps.iSimMax; iSim++){
+		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 			printf("\n \n \n sim = %i \n \n \n",iSim);
 			dynamicsEngine(Reps.sims[iSim]);
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
@@ -256,11 +271,11 @@ int main(int argc, char *argv[]){
 		FLFile = fopen(argv[2],"a");
 		fprintf(FLFile, "%E \n", fluxes());
 		fclose(FLFile);
-		splitMerge();
+		splitMerge(nWE);
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
-		for(int iSim = 0; iSim < Reps.iSimMax; iSim++){
+		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 			dynamicsEngine(Reps.sims[iSim]);
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;

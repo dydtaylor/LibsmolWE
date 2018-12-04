@@ -1,3 +1,3 @@
 all:
-	gcc -Wall -O0 -g -c weightedEnsemble.c
-	gcc weightedEnsemble.o -o WESim -lsmoldyn_shared
+	gcc -Wall -O0 -g -c weSmoldyn.c
+	gcc weSmoldyn.o -o weSmoldyn -lsmoldyn_shared

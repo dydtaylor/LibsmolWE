@@ -14,7 +14,9 @@ void initialDist(int nInit){
 		smolSetSimTimes(Reps.sims[jSim],0,10000,paramsDe.dt);
 		smolAddSpecies(Reps.sims[jSim],"A",NULL);
 		smolSetSpeciesMobility(Reps.sims[jSim],"A",MSall, paramsDe.difC, 0, 0);
+		smolSetMaxMolecules(Reps.sims[jSim],paramsDe.nPart);
 		smolAddSolutionMolecules(Reps.sims[jSim], "A", paramsDe.nPart, NULL, NULL);
+		smolAddSurface(Reps.sims[jSim], "bounds");
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-x", topRightCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
@@ -31,6 +33,7 @@ void initialDist(int nInit){
 		
 		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
 		smolUpdateSim(Reps.sims[jSim]);
+		liveIndices[jSim] = 1;
 	}
 }
 
@@ -42,11 +45,11 @@ int findBin(simptr currentSim){
 	int nInBin, nMol;
 	double molX, molY;
 	nInBin = 0;
-	for(nMolList = 0; nMolList < maxlist;++){
+	//for(nMolList = 0; nMolList < maxlist;++){ This loop will be included when I add more molecule types to simulations
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		molX = currentSim->mols->live[0][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[0][nMol]->pos[1];
-		if((pow(molX,2) + pow(molY,2)) < paramsDe.roiR*paramsDe.roiR){ //molX*molX might be faster
+		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){ //molX*molX might be faster
 			nInBin++;
 		}
 	}

@@ -14,9 +14,9 @@
 #define RANDINT genrand_int32()
 #define PI 3.14159265
 
-#define NBINSMAX 1000
-#define BINCONTENTSMAXMAX 2000
-#define ISIMMAXMAX 1000000 
+#define NBINSMAX 10
+#define BINCONTENTSMAXMAX 100
+#define ISIMMAXMAX 50 
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
@@ -50,3 +50,4 @@ struct replicas{
 struct paramsWeightedEnsemble paramsWe;
 struct paramsDynamicsEngine paramsDe;
 struct replicas Reps;
+double liveIndices[ISIMMAXMAX];
