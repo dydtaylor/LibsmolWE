@@ -15,7 +15,7 @@ void initialDist(int nInit){
 		smolAddSpecies(Reps.sims[jSim],"A",NULL);
 		smolSetSpeciesMobility(Reps.sims[jSim],"A",MSall, paramsDe.difC, 0, 0);
 		smolSetMaxMolecules(Reps.sims[jSim],paramsDe.nPart);
-		smolAddSolutionMolecules(Reps.sims[jSim], "A", paramsDe.nPart, NULL, NULL);
+		smolAddSolutionMolecules(Reps.sims[jSim], "A", paramsDe.nPart, lowBounds, highBounds);
 		smolAddSurface(Reps.sims[jSim], "bounds");
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-x", topRightCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
