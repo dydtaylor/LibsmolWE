@@ -99,14 +99,14 @@ void splitMerge(int nWE){
 			if (Reps.iSimMax ==keptInd[1]){
 				Reps.binContents[simMaxHolder][Reps.binLocs[Reps.iSimMax]] = Reps.binContentsMax[Reps.binLocs[Reps.iSimMax]] - 1;
 			}
-
+			smolFreeSim(Reps.sims[keptInd[1]]);
 			Reps.sims[keptInd[1]] = Reps.sims[Reps.iSimMax];
 			Reps.weights[keptInd[1]] = Reps.weights[Reps.iSimMax];
 			Reps.binLocs[keptInd[1]] = Reps.binLocs[Reps.iSimMax];
 
 			//Setting things to NAN is technically unnecessary. Freeing Sim Saves much memory.
 			printf("\n \n Kept Sim: %i (%i) \n Lost Sim: %i (%i) \n iSimMax: %i \n \n ", keptInd[0], mergeInd[0], keptInd[1], mergeInd[1], Reps.iSimMax);
-			smolFreeSim(Reps.sims[Reps.iSimMax]);
+			Reps.sims[Reps.iSimMax] = NULL;
 			Reps.weights[Reps.iSimMax] = NAN;
 			Reps.binLocs[Reps.iSimMax] = NAN;
 			liveIndices[Reps.iSimMax] = 0;
@@ -124,7 +124,7 @@ void splitMerge(int nWE){
 					}
 				} // finished j loop through this bin's contents
 		if(fabs(nWE*paramsDe.dt-Reps.sims[0]->time)>1e-5){
-			printf("Err");
+			//printf("Err");
 		}
 			} // finished i loop through this bin's contents
 		} // finished while-loop to check this bin
@@ -254,12 +254,15 @@ int main(int argc, char *argv[]){
 	for(nWE = 0; nWE < tauQuarter; nWE++){
 		printf("Tau Step: %i \n", nWE);
 		splitMerge(nWE);
+		if(nWE ==184){
+			printf("Here \n");
+		}
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 			printf("\n \n \n sim = %i \n \n \n",iSim);
-			printf("%f \n",Reps.sims[0]->mols->live[0][0]->pos[0]);
+			//printf("%f \n",Reps.sims[0]->mols->live[0][0]->pos[0]);
 			dynamicsEngine(Reps.sims[iSim]);
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;

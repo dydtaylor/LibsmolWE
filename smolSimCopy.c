@@ -12,7 +12,7 @@ void copySim1(int simIn, int simOut){
 	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
 	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
 	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);
-	smolSetSimTimes(Reps.sims[simOut], Reps.sims[simIn]->time, 10000, paramsDe.dt);
+	smolSetSimTimes(Reps.sims[simOut], 0, 10000, paramsDe.dt); //Reps.sims[simIn]->time is another option
 	smolAddSpecies(Reps.sims[simOut], "A", NULL);
 	smolSetSpeciesMobility(Reps.sims[simOut], "A", MSall, paramsDe.difC,0,0);
 	smolSetMaxMolecules(Reps.sims[simOut],paramsDe.nPart);
@@ -31,7 +31,7 @@ void copySim1(int simIn, int simOut){
 	smolAddCompartmentSurface(Reps.sims[simOut],"roiComp","roi");
 	smolAddCompartmentPoint(Reps.sims[simOut],"roiComp",insideRoi);
 		
-	smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt A = 0 roiComp stop");
+	//smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt A = 0 roiComp stop");
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		smolAddSolutionMolecules(Reps.sims[simOut], "A", 1, Reps.sims[simIn]->mols->live[0][nMol]->pos,Reps.sims[simIn]->mols->live[0][nMol]->pos);
 	}

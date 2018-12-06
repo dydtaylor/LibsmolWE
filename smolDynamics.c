@@ -31,7 +31,7 @@ void initialDist(int nInit){
 		smolAddCompartmentSurface(Reps.sims[jSim],"roiComp","roi");
 		smolAddCompartmentPoint(Reps.sims[jSim],"roiComp",insideRoi);
 		
-		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
+		//smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
 		smolUpdateSim(Reps.sims[jSim]);
 		liveIndices[jSim] = 1;
 	}
