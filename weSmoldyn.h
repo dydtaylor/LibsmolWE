@@ -15,8 +15,9 @@
 #define PI 3.14159265
 
 #define NBINSMAX 100
-#define BINCONTENTSMAXMAX 100
-#define ISIMMAXMAX 10000
+#define BINCONTENTSMAXMAX 10000
+#define ISIMMAXMAX 10000000
+#define NULLDEVICE "/dev/null"
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
@@ -50,4 +51,3 @@ struct replicas{
 struct paramsWeightedEnsemble paramsWe;
 struct paramsDynamicsEngine paramsDe;
 struct replicas Reps;
-double liveIndices[ISIMMAXMAX];

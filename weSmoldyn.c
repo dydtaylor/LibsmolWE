@@ -109,7 +109,6 @@ void splitMerge(int nWE){
 			Reps.sims[Reps.iSimMax] = NULL;
 			Reps.weights[Reps.iSimMax] = NAN;
 			Reps.binLocs[Reps.iSimMax] = NAN;
-			liveIndices[Reps.iSimMax] = 0;
 			Reps.iSimMax--;
 
 			/*Reorganize the binContents matrix*/
@@ -145,7 +144,6 @@ void splitMerge(int nWE){
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax+1] = Reps.weights[splitInd];
 			Reps.binLocs[Reps.iSimMax+1] = Reps.binLocs[splitInd];
-			liveIndices[Reps.iSimMax+1] = 1;
 			Reps.iSimMax++;
 			if(Reps.iSimMax > ISIMMAXMAX){
 				printf("ERROR: iSimMax out of bounds");
@@ -214,6 +212,9 @@ double fluxes(){
 }
 
 int main(int argc, char *argv[]){
+	//argv 1: ending sim file, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit
+	//dynamics params: dt, L, R, D, N
+	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
 	
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile;
@@ -254,9 +255,6 @@ int main(int argc, char *argv[]){
 	for(nWE = 0; nWE < tauQuarter; nWE++){
 		printf("Tau Step: %i \n", nWE);
 		splitMerge(nWE);
-		if(nWE ==184){
-			printf("Here \n");
-		}
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
@@ -268,6 +266,7 @@ int main(int argc, char *argv[]){
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 		}
+		fluxes();
 	}
 	
 	for(nWE = tauQuarter; nWE < tauMax; nWE++){

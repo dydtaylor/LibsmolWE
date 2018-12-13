@@ -1,6 +1,7 @@
 void copySim1(int simIn, int simOut){
 
 	int nMol;
+	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
@@ -31,11 +32,12 @@ void copySim1(int simIn, int simOut){
 	smolAddCompartmentSurface(Reps.sims[simOut],"roiComp","roi");
 	smolAddCompartmentPoint(Reps.sims[simOut],"roiComp",insideRoi);
 		
-	//smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt A = 0 roiComp stop");
+	smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt A = 0 roiComp stop");
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		smolAddSolutionMolecules(Reps.sims[simOut], "A", 1, Reps.sims[simIn]->mols->live[0][nMol]->pos,Reps.sims[simIn]->mols->live[0][nMol]->pos);
 	}
 	smolUpdateSim(Reps.sims[simOut]);
+	//Reps.sims[simOut]->logfile = nulldev;
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simOut]->mols->live[0][nMol]->pos[0],Reps.sims[simOut]->mols->live[0][nMol]->pos[1]);
 		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simIn]->mols->live[0][nMol]->pos[0],Reps.sims[simIn]->mols->live[0][nMol]->pos[1]);

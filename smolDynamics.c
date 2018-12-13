@@ -1,5 +1,6 @@
 void initialDist(int nInit){
 	int jSim;
+	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
 	double botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
@@ -31,9 +32,9 @@ void initialDist(int nInit){
 		smolAddCompartmentSurface(Reps.sims[jSim],"roiComp","roi");
 		smolAddCompartmentPoint(Reps.sims[jSim],"roiComp",insideRoi);
 		
-		//smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
+		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
 		smolUpdateSim(Reps.sims[jSim]);
-		liveIndices[jSim] = 1;
+		//Reps.sims[jSim]->logfile = nulldev;
 	}
 }
 
