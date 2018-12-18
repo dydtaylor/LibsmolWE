@@ -2,7 +2,7 @@
 
 make
 sed -i "" "1c\ 
-10 200 10000 25" "WEParams.txt"
+10 200 200 10000 25" "WEParams.txt"
 
 for n in {15..17}
 do

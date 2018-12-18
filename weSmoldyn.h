@@ -15,8 +15,8 @@
 #define PI 3.14159265
 
 #define NBINSMAX 100
-#define BINCONTENTSMAXMAX 10000
-#define ISIMMAXMAX 10000000
+#define BINCONTENTSMAXMAX 50000
+#define ISIMMAXMAX 50000
 #define NULLDEVICE "/dev/null"
 
 struct paramsWeightedEnsemble{
@@ -26,6 +26,7 @@ struct paramsWeightedEnsemble{
 			// If tauMax = 1000, tau = 10, dt = .005, then sim will end at t=tauMax*tau*dt = 50;
 	unsigned int nBins;
 	unsigned int fluxBin;
+	unsigned int nInit;
 	double binDefs[NBINSMAX];
 } ;
 

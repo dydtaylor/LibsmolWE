@@ -105,7 +105,6 @@ void splitMerge(int nWE){
 			Reps.binLocs[keptInd[1]] = Reps.binLocs[Reps.iSimMax];
 
 			//Setting things to NAN is technically unnecessary. Freeing Sim Saves much memory.
-			printf("\n \n Kept Sim: %i (%i) \n Lost Sim: %i (%i) \n iSimMax: %i \n \n ", keptInd[0], mergeInd[0], keptInd[1], mergeInd[1], Reps.iSimMax);
 			Reps.sims[Reps.iSimMax] = NULL;
 			Reps.weights[Reps.iSimMax] = NAN;
 			Reps.binLocs[Reps.iSimMax] = NAN;
@@ -139,7 +138,6 @@ void splitMerge(int nWE){
 					splitInd = dummyInd;
 				}
 			}
-			printf("Split index: %i \n", splitInd);
 			copySim1(splitInd,Reps.iSimMax+1); //Needs to create a new Sim, this just copies a pointer which will never work
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax+1] = Reps.weights[splitInd];
@@ -216,16 +214,18 @@ int main(int argc, char *argv[]){
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
+	clock_t start[4], stop[4];
+	//double initialDistTime, splitMergeTime, dynamicsTime, totalTime;
 	
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile;
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
 
-	fscanf(WEFile,"%i %i %i %i", &paramsWe.tau, &paramsWe.repsPerBin, &paramsWe.tauMax, &paramsWe.nBins);
+	fscanf(WEFile,"%i %i %i %i %i", &paramsWe.tau, &paramsWe.repsPerBin, &paramsWe.nInit, &paramsWe.tauMax, &paramsWe.nBins);
 	fscanf(DEFile, "%lf %lf %lf %lf %i", &paramsDe.dt, &paramsDe.worldLength, &paramsDe.roiR, &paramsDe.difC, &paramsDe.nPart);
 	paramsWe.fluxBin = 0;
-	Reps.iSimMax = paramsWe.repsPerBin -1;
+	Reps.iSimMax = paramsWe.nInit -1;
 	fclose(DEFile);
 	fclose(WEFile);
 	Reps.nBins = paramsWe.nBins;
@@ -240,8 +240,11 @@ int main(int argc, char *argv[]){
 	rngBit = atoi(argv[4]);
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
     fclose(errFile);
-	initialDist(paramsWe.repsPerBin);
-	for(iSim = 0; iSim < paramsWe.repsPerBin; iSim++){
+	start[0] = clock();
+	start[3] = clock();
+	initialDist(paramsWe.nInit);
+	stop[0] = clock();
+	for(iSim = 0; iSim < paramsWe.nInit; iSim++){
 		Reps.weights[iSim] = (double)1/paramsWe.repsPerBin;
 		Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 		Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
@@ -254,14 +257,26 @@ int main(int argc, char *argv[]){
 	
 	for(nWE = 0; nWE < tauQuarter; nWE++){
 		printf("Tau Step: %i \n", nWE);
+		if(nWE == 1){
+			start[1] = clock();
+		}
 		splitMerge(nWE);
+		if(nWE ==1){
+			stop[1] = clock();
+		}
+		printf("iSimMax: %i \n", Reps.iSimMax);
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 			printf("\n \n \n sim = %i \n \n \n",iSim);
-			//printf("%f \n",Reps.sims[0]->mols->live[0][0]->pos[0]);
+			if(nWE == 1){
+				start[2] = clock();
+			}
 			dynamicsEngine(Reps.sims[iSim]);
+			if(nWE == 1){
+				stop[2] = clock();
+			}
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
@@ -275,6 +290,7 @@ int main(int argc, char *argv[]){
 		fprintf(FLFile, "%E \n", fluxes());
 		fclose(FLFile);
 		splitMerge(nWE);
+		printf("iSimMax: %i \n", Reps.iSimMax);
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
@@ -285,7 +301,10 @@ int main(int argc, char *argv[]){
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 		}
 	}
+	stop[3] = clock();
 	
+	clockFile = fopen("Execution Times","w");
+	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
 	
 	SIMFile = fopen(argv[1], "w");
 	for(iBin = 0;iBin <= Reps.iSimMax; iBin++){ // JUN COMMENT: Better name for counter, like iBin.

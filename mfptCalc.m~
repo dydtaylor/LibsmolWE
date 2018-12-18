@@ -1,0 +1,16 @@
+fluxes = NaN(18, 7500);
+oldMeans = NaN(18,1);
+for j = 2:19
+    filename = "Data/flux"+j+".txt";
+    data = load(filename);
+    fluxes((j-1),:) = data;
+    oldData = load("oldData/nSweep/"+j+".txt");
+    oldMeans(j) = mean(oldData);
+end
+
+meanFluxes = mean(fluxes,2);
+MFPT = ones(size(meanFluxes))./(meanFluxes * 10^5);
+figure()
+hold on
+semilogy(2:19, MFPT,'ro','linewidth',2);
+set(gca,'yscale','log')
