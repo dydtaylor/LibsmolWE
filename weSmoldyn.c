@@ -210,7 +210,7 @@ double fluxes(){
 }
 
 int main(int argc, char *argv[]){
-	//argv 1: ending sim file, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit
+	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
