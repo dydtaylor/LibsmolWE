@@ -3,6 +3,9 @@
 #include "smolSimCopy.c"
 
 void splitMerge(int nWE){
+	/*This function is largely unchanged from the OU Weighted Ensemble. 
+	Main difference is in the splitting loop, copySim was written to deal with smoldyn data structures
+	*/
 	int binMin = 0;
 	int binMax = Reps.nBins;
 	unsigned int dummyInd;/*Just a dummy index that will hold the current index location in both split and merge loop*/
@@ -104,7 +107,7 @@ void splitMerge(int nWE){
 			Reps.weights[keptInd[1]] = Reps.weights[Reps.iSimMax];
 			Reps.binLocs[keptInd[1]] = Reps.binLocs[Reps.iSimMax];
 
-			//Setting things to NAN is technically unnecessary. Freeing Sim Saves much memory.
+			//Setting things to NAN is technically unnecessary. Freeing sim should save memory.
 			Reps.sims[Reps.iSimMax] = NULL;
 			Reps.weights[Reps.iSimMax] = NAN;
 			Reps.binLocs[Reps.iSimMax] = NAN;
@@ -172,8 +175,7 @@ double fluxes(){
 	// loop through replicas in flux bin and delete them
 	if(nFlux>0){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
-			 // JUN COMMENT: Is this a validation check? Shouldn't all these be in the fluxbin?
-				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]]; // JUN COMMENT: Use += notation?
+				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
 				copySim1(Reps.iSimMax, Reps.binContents[iReps][paramsWe.fluxBin]);
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];
@@ -210,13 +212,14 @@ double fluxes(){
 }
 
 int main(int argc, char *argv[]){
-	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit
+	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
-	clock_t start[4], stop[4];
-	//double initialDistTime, splitMergeTime, dynamicsTime, totalTime;
+	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 	
+	
+	//Load simulation / WE parameters from outside files
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile;
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
@@ -236,7 +239,8 @@ int main(int argc, char *argv[]){
 	tauMax = paramsWe.tauMax;
 
 	printf("Tau loops + flux vector made \n");
-
+	
+	//Set + record new RNG seed, set up initial distribution
 	rngBit = atoi(argv[4]);
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
     fclose(errFile);
@@ -244,6 +248,7 @@ int main(int argc, char *argv[]){
 	start[3] = clock();
 	initialDist(paramsWe.nInit);
 	stop[0] = clock();
+	//Set other key initial values in replicas struct
 	for(iSim = 0; iSim < paramsWe.nInit; iSim++){
 		Reps.weights[iSim] = (double)1/paramsWe.repsPerBin;
 		Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
@@ -254,7 +259,7 @@ int main(int argc, char *argv[]){
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
 	
-	
+	//First quarter simulation
 	for(nWE = 0; nWE < tauQuarter; nWE++){
 		printf("Tau Step: %i \n", nWE);
 		if(nWE == 1){
@@ -283,7 +288,7 @@ int main(int argc, char *argv[]){
 		}
 		fluxes();
 	}
-	
+	//Final 3/4 of simulation
 	for(nWE = tauQuarter; nWE < tauMax; nWE++){
 		printf("Tau Step: %i \n", nWE);
 		FLFile = fopen(argv[2],"a");
@@ -303,7 +308,7 @@ int main(int argc, char *argv[]){
 	}
 	stop[3] = clock();
 	
-	clockFile = fopen("Execution Times","w");
+	clockFile = fopen(argv[5],"w");
 	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
 	
 	SIMFile = fopen(argv[1], "w");

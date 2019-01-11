@@ -1,6 +1,5 @@
 void initialDist(int nInit){
 	int jSim;
-	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
 	double botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
@@ -43,6 +42,7 @@ void dynamicsEngine(simptr currentSim){
 }
 
 int findBin(simptr currentSim){
+	//Finds number of molecules inside the ROI by inspecting each molecule's location
 	int nInBin, nMol;
 	double molX, molY;
 	nInBin = 0;
@@ -50,7 +50,7 @@ int findBin(simptr currentSim){
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		molX = currentSim->mols->live[0][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[0][nMol]->pos[1];
-		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){ //molX*molX might be faster
+		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){ 
 			nInBin++;
 		}
 	}

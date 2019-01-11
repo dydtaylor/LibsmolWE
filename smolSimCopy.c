@@ -1,5 +1,9 @@
 void copySim1(int simIn, int simOut){
 
+	/*
+	Takes simIn, reads molecule locations from the sim, then makes a new sim with molecules at the same locations. Most parameters / lines of code are identical to the sim made through initialDist
+	*/
+	
 	int nMol;
 	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	
@@ -24,7 +28,6 @@ void copySim1(int simIn, int simOut){
 	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
 	smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
 		
-	//ROI Surface + compartment
 	smolAddSurface(Reps.sims[simOut], "roi");
 	smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);
 	smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans);
@@ -33,17 +36,18 @@ void copySim1(int simIn, int simOut){
 	smolAddCompartmentPoint(Reps.sims[simOut],"roiComp",insideRoi);
 		
 	smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt A = 0 roiComp stop");
+	//The following for loop is the major difference between this and the initial configuration simulation building.
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		smolAddSolutionMolecules(Reps.sims[simOut], "A", 1, Reps.sims[simIn]->mols->live[0][nMol]->pos,Reps.sims[simIn]->mols->live[0][nMol]->pos);
 	}
 	smolUpdateSim(Reps.sims[simOut]);
-	//Reps.sims[simOut]->logfile = nulldev;
+	//Print statement to check functionality. Note molecule indices get changed but everything else preserved
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simOut]->mols->live[0][nMol]->pos[0],Reps.sims[simOut]->mols->live[0][nMol]->pos[1]);
 		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simIn]->mols->live[0][nMol]->pos[0],Reps.sims[simIn]->mols->live[0][nMol]->pos[1]);
 	}
 }
-/*
+/* Potential function for copying sims through writing and reading file.
 void copySim2(simptr simIn, simptr simOut){
 	FILE *simFile;
 	simFile = fopen("simStore.txt","w");
