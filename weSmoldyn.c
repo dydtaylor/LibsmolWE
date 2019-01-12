@@ -3,7 +3,7 @@
 #include "smolSimCopy.c"
 
 void splitMerge(int nWE){
-	/*This function is largely unchanged from the OU Weighted Ensemble. 
+	/*This function is largely unchanged from the OU Weighted Ensemble.
 	Main difference is in the splitting loop, copySim was written to deal with smoldyn data structures
 	*/
 	int binMin = 0;
@@ -15,6 +15,8 @@ void splitMerge(int nWE){
 	int splitInd; /* Index of replica to split*/
 	int splitBin, mergeBin, repInBin, entryCheck1, entryCheck2, iSimMaxReplace; //Looping variables
 
+	int simMaxHolder;
+
 	double p0; /*Doubles giving the merge probabilities*/
 	double randPull; /*Double storing a pull from RAND*/
 	//unsigned int binConPrev[BINCONTENTSMAXMAX][NBINSMAX];
@@ -23,7 +25,7 @@ void splitMerge(int nWE){
 	for(mergeBin = binMin; mergeBin <binMax; mergeBin++){
 		/*Initialize the merge indices with the first 2 indices stored in appropriate BinContents row*/
 
-		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin) && Reps.binContentsMax[mergeBin] > 0){
+		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin) && Reps.binContentsMax[mergeBin] > 0){ // JUN COMMENT: What is the second condition for?
 			mergeInd[0] = Reps.binContents[0][mergeBin];
 			mergeInd[1] = Reps.binContents[1][mergeBin];
 			rowCol[0] = 0;
@@ -68,7 +70,7 @@ void splitMerge(int nWE){
 			}
 
 			/*Update weight of the kept index*/
-			if( (isnan(Reps.weights[keptInd[0]])) || (isnan(Reps.weights[keptInd[1]]))){ // JUN COMMENT: Is it possible to use isnan()?
+			if( (isnan(Reps.weights[keptInd[0]])) || (isnan(Reps.weights[keptInd[1]]))){
 				//fprintf(errFile, "WARNING: Moving NAN Weight \n");
 			}
 			Reps.weights[keptInd[0]] = Reps.weights[keptInd[0]] + Reps.weights[keptInd[1]];
@@ -78,8 +80,6 @@ void splitMerge(int nWE){
 			if(isnan(Reps.weights[Reps.iSimMax])){
 				//fprintf(errFile, "WARNING: Moving NAN Weight \n");
 			}
-
-			int simMaxHolder;
 
 			/*Find iSimMax in binContents and replace it with keptInd[1]*/
 			/*For loop: iterates through the row of the bin ISM is in.
@@ -123,11 +123,11 @@ void splitMerge(int nWE){
 					if(Reps.binContents[entryCheck1][mergeBin]==Reps.binContents[entryCheck2][mergeBin]){
 						//fprintf(errFile, "ERROR: Duplicate entries in BC \n");
 					}
-				} // finished j loop through this bin's contents
-		if(fabs(nWE*paramsDe.dt-Reps.sims[0]->time)>1e-5){
-			//printf("Err");
-		}
-			} // finished i loop through this bin's contents
+				} // finished entryCheck2 loop through this bin's contents
+				if(fabs(nWE*paramsDe.dt-Reps.sims[0]->time)>1e-5){
+					//printf("Err");
+				}
+			} // finished entryCheck1 loop through this bin's contents
 		} // finished while-loop to check this bin
 	} // finished merging loop through bins
 
@@ -141,7 +141,7 @@ void splitMerge(int nWE){
 					splitInd = dummyInd;
 				}
 			}
-			copySim1(splitInd,Reps.iSimMax+1); //Needs to create a new Sim, this just copies a pointer which will never work
+			copySim1(splitInd,Reps.iSimMax+1);
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax+1] = Reps.weights[splitInd];
 			Reps.binLocs[Reps.iSimMax+1] = Reps.binLocs[splitInd];
@@ -155,7 +155,6 @@ void splitMerge(int nWE){
 	} // finished splitting loop
 	return;
 }
-
 
 double fluxes(){
 	double fluxOut = 0;
@@ -171,16 +170,16 @@ double fluxes(){
 	if(fabs(weightSum-1)>1e-6){
 		printf("Weight not conserved \n");
 	}
-	
+
 	// loop through replicas in flux bin and delete them
 	if(nFlux>0){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
+				// Create new replica to replace the one recently lost
 				copySim1(Reps.iSimMax, Reps.binContents[iReps][paramsWe.fluxBin]);
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];
 
-				
 				for(iSimMaxReplace = 0; iSimMaxReplace < Reps.binContentsMax[Reps.binLocs[Reps.iSimMax]];iSimMaxReplace++){
 					if(Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax]] == Reps.iSimMax){
 						Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax]] = Reps.binContents[iReps][paramsWe.fluxBin];
@@ -199,13 +198,11 @@ double fluxes(){
 			printf("Non Zero weight in flux bin \n");
 	};
 
-
+	// Re-weight the remaining replicas
 	if(fluxOut != 0){
-
 			for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 				Reps.weights[iSim] = Reps.weights[iSim]/(weightSum-fluxOut);
 			}
-
 	}
 
 	return fluxOut;
@@ -217,8 +214,7 @@ int main(int argc, char *argv[]){
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
-	
-	
+
 	//Load simulation / WE parameters from outside files
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile;
 	DEFile = fopen("dynamicsParams.txt","r");
@@ -239,7 +235,7 @@ int main(int argc, char *argv[]){
 	tauMax = paramsWe.tauMax;
 
 	printf("Tau loops + flux vector made \n");
-	
+
 	//Set + record new RNG seed, set up initial distribution
 	rngBit = atoi(argv[4]);
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
@@ -258,7 +254,7 @@ int main(int argc, char *argv[]){
 
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
-	
+
 	//First quarter simulation
 	for(nWE = 0; nWE < tauQuarter; nWE++){
 		printf("Tau Step: %i \n", nWE);
@@ -291,12 +287,15 @@ int main(int argc, char *argv[]){
 	//Final 3/4 of simulation
 	for(nWE = tauQuarter; nWE < tauMax; nWE++){
 		printf("Tau Step: %i \n", nWE);
+
+		// Data collection
 		FLFile = fopen(argv[2],"a");
 		fprintf(FLFile, "%E \n", fluxes());
 		fclose(FLFile);
+
 		splitMerge(nWE);
 		printf("iSimMax: %i \n", Reps.iSimMax);
-		for(int iBin = 0; iBin < Reps.nBins; iBin++){
+		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
@@ -307,16 +306,16 @@ int main(int argc, char *argv[]){
 		}
 	}
 	stop[3] = clock();
-	
+
 	clockFile = fopen(argv[5],"w");
 	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
-	
+
 	SIMFile = fopen(argv[1], "w");
-	for(iBin = 0;iBin <= Reps.iSimMax; iBin++){ // JUN COMMENT: Better name for counter, like iBin.
+	for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
 		fprintf(SIMFile, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
 	}
 	fclose(SIMFile);
-	
-	
+
+
 	return 0;
 }
