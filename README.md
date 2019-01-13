@@ -1,6 +1,6 @@
-# WeSmol - Weighted Ensemble for rare event simulations in Smoldyn
+# WeSmol 
 
-One Paragraph of project description goes here
+The Weighted Ensemble for spatial rare event simulations in Smoldyn. One Paragraph of project description goes here
 
 ## Getting Started
 
