@@ -1,4 +1,4 @@
-## libmolWE code review request list
+## libsmolWE code review request list
 
 ### Folder structure
 
