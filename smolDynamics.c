@@ -22,7 +22,7 @@ void initialDist(int nInit){
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+y", topRightCornerRect);
 		smolSetSurfaceAction(Reps.sims[jSim], "bounds", PFboth, "all", MSall, SAreflect);
-		
+
 		//ROI Surface + compartment
 		smolAddSurface(Reps.sims[jSim], "roi");
 		smolAddPanel(Reps.sims[jSim],"roi", PSsph, NULL, "+0", roiParams);
@@ -30,14 +30,14 @@ void initialDist(int nInit){
 		smolAddCompartment(Reps.sims[jSim],"roiComp");
 		smolAddCompartmentSurface(Reps.sims[jSim],"roiComp","roi");
 		smolAddCompartmentPoint(Reps.sims[jSim],"roiComp",insideRoi);
-		
+
 		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
 		smolUpdateSim(Reps.sims[jSim]);
 		//Reps.sims[jSim]->logfile = nulldev;
 	}
 }
 
-void dynamicsEngine(simptr currentSim){	
+void dynamicsEngine(simptr currentSim){
 	smolRunSimUntil(currentSim, currentSim->time + paramsWe.tau*paramsDe.dt);
 }
 
@@ -50,7 +50,7 @@ int findBin(simptr currentSim){
 	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
 		molX = currentSim->mols->live[0][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[0][nMol]->pos[1];
-		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){ 
+		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
 			nInBin++;
 		}
 	}
