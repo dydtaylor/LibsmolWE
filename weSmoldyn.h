@@ -19,6 +19,10 @@
 #define ISIMMAXMAX 50000
 #define NULLDEVICE "/dev/null"
 
+#define SMOLTIMEMAX 10000
+
+#define DEBUGGING 0
+
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
 	unsigned int repsPerBin; // Target number of replicas per bin. Sometimes called "MTarg".
