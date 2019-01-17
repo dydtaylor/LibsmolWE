@@ -172,7 +172,7 @@ double fluxes(){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
 				// Create new replica to replace the one recently lost
-				copySim1(Reps.iSimMax, Reps.binContents[iReps][paramsWe.fluxBin]);
+				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[iSimMax];
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];
 
@@ -182,7 +182,6 @@ double fluxes(){
 					}
 				}
 
-				smolFreeSim(Reps.sims[Reps.iSimMax]);
 				Reps.weights[Reps.iSimMax] = NAN;
 				Reps.binLocs[Reps.iSimMax] = NAN;
 				Reps.iSimMax--;
@@ -205,15 +204,46 @@ double fluxes(){
 }
 
 void getParams(FILE *DEFile, FILE *WEFile){
-	fscanf(WEFile,"%i %i %i %i %i", &paramsWe.tau, &paramsWe.repsPerBin, &paramsWe.nInit, &paramsWe.tauMax, &paramsWe.nBins);
-	fscanf(DEFile, "%lf %lf %lf %lf %i", &paramsDe.dt, &paramsDe.worldLength, &paramsDe.roiR, &paramsDe.difC, &paramsDe.nPart);
+	char[32] tmpStr;
+	
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.tau);
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.repsPerBin);
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.nInit);
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.tauMax);
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.nBins);
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.fluxBin);
+	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.dt);
+	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.worldLength);
+	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.roiR);
+	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.difC);
+	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.nPart);
 	paramsWe.fluxBin = 0;
 	Reps.iSimMax = paramsWe.nInit -1;
 	fclose(DEFile);
 	fclose(WEFile);
 	Reps.nBins = paramsWe.nBins;
-
+	
+	lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
+	highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
+	botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
+	topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
+	roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
+	insideRoi[] = {0.0, 0.0};
+	
 	printf("Parameters loaded\n");
+}
+
+double fluxPDF(double fluxIn, double *pdfBinDefs, int *pdfCounts, int pdfBins){
+	
+	if(DEBUGGING && (sizeof(pdfBinDefs)/sizeof(pdfBinDefs[0]) != pdfBins + 1))){
+		printf("Error: pdfBins don't allign with pdfBinDefs);
+	}
+	
+	for(iBinpdf = 0; iBinpdf < pdfBins; iBinpdf++){
+		if(fluxIn > pdfBinDefs[iBinpdf] && fluxIn < pdfBinDefs[iBinpdf+1]){
+			pdfCounts[iBinpdf]++;
+		}
+	}
 }
 
 int main(int argc, char *argv[]){
@@ -265,16 +295,10 @@ int main(int argc, char *argv[]){
 			start[1] = clock();
 		}
 		
-		if(nWE > 0){
-			if(nWE>tauQuarter){
-				FLFile = fopen(argv[2],"a");
-				fprintf(FLFile, "%E \n", fluxes());
-				fclose(FLFile);
-			}
-			else{
-				fluxes();
-			}
-		}
+
+		FLFile = fopen(argv[2],"a");
+		fprintf(FLFile, "%E \n", fluxes());
+		fclose(FLFile);
 		
 		splitMerge(nWE);
 		

@@ -1,11 +1,5 @@
-	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
-	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
-	double botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
-	double topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
-	double roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
-	double insideRoi[] = {0.0, 0.0};
-
 void simSetup(int simOut){
+
 	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
 	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
 	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);

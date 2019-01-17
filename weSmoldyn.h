@@ -56,3 +56,10 @@ struct replicas{
 struct paramsWeightedEnsemble paramsWe;
 struct paramsDynamicsEngine paramsDe;
 struct replicas Reps;
+
+double lowBounds[2];
+double highBounds[2];
+double botLeftCornerRect[3];
+double topRightCornerRect[3];
+double roiParams[4];
+double insideRoi[2];
