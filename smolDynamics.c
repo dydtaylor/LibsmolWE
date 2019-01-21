@@ -3,11 +3,11 @@ void simSetup(int simOut){
 	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
 	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
 	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);
-	smolSetSimTimes(Reps.sims[simOut],SMOLTIMEMAX,paramsDe.dt);
+	smolSetSimTimes(Reps.sims[simOut], 0, SMOLTIMEMAX,paramsDe.dt);
 	smolAddSpecies(Reps.sims[simOut],"A",NULL);
-	smolSetSpeciesMobility(Reps.sims[simOut],"A",MSall, paramsDe.difc, 0, 0);
+	smolSetSpeciesMobility(Reps.sims[simOut],"A",MSall, paramsDe.difC, 0, 0);
 	smolSetMaxMolecules(Reps.sims[simOut],paramsDe.nPart);
-	smolAddSurface(Reps.sims[jSim], "bounds");
+	smolAddSurface(Reps.sims[simOut], "bounds");
 	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-x", topRightCornerRect);
 	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
 	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
@@ -20,8 +20,8 @@ void simSetup(int simOut){
 	smolAddCompartment(Reps.sims[simOut],"roiComp");
 	smolAddCompartmentSurface(Reps.sims[simOut],"roiComp","roi");
 	smolAddCompartmentPoint(Reps.sims[simOut],"roiComp",insideRoi);
-	smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt A = 0 roiComp stop");
-	smolUpdateSim(Reps.sims[jSim]);
+	smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt A = 0 roiComp stop");
+	smolUpdateSim(Reps.sims[simOut]);
 }
 
 void initialDist(int nInit){

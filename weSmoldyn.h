@@ -21,6 +21,8 @@
 
 #define SMOLTIMEMAX 10000
 
+#define NFLUXBINS 50
+
 #define DEBUGGING 0
 
 struct paramsWeightedEnsemble{

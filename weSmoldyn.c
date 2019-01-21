@@ -172,7 +172,7 @@ double fluxes(){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
 				// Create new replica to replace the one recently lost
-				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[iSimMax];
+				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[Reps.iSimMax];
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];
 
@@ -204,7 +204,7 @@ double fluxes(){
 }
 
 void getParams(FILE *DEFile, FILE *WEFile){
-	char[32] tmpStr;
+	char tmpStr[32];
 	
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.tau);
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.repsPerBin);
@@ -223,20 +223,30 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fclose(WEFile);
 	Reps.nBins = paramsWe.nBins;
 	
-	lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
-	highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
-	botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
-	topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
-	roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
-	insideRoi[] = {0.0, 0.0};
+	lowBounds[0] = -paramsDe.worldLength/2;
+	lowBounds[1] = -paramsDe.worldLength/2;
+	highBounds[0] = paramsDe.worldLength/2;
+	highBounds[1] = paramsDe.worldLength/2;
+	botLeftCornerRect[0] = -paramsDe.worldLength/2;
+	botLeftCornerRect[1] = -paramsDe.worldLength/2;
+	botLeftCornerRect[2] = paramsDe.worldLength;
+	topRightCornerRect[0] = paramsDe.worldLength/2;
+	topRightCornerRect[1] = paramsDe.worldLength/2;
+	topRightCornerRect[2] = -paramsDe.worldLength;
+	roiParams[0] = 0.0;
+	roiParams[1] = 0.0;
+	roiParams[2] = paramsDe.roiR;
+	roiParams[3] = 30;
+	insideRoi[0] = 0.0;
+	insideRoi[1] = 0.0;
 	
 	printf("Parameters loaded\n");
 }
 
 double fluxPDF(double fluxIn, double *pdfBinDefs, int *pdfCounts, int pdfBins){
-	
-	if(DEBUGGING && (sizeof(pdfBinDefs)/sizeof(pdfBinDefs[0]) != pdfBins + 1))){
-		printf("Error: pdfBins don't allign with pdfBinDefs);
+	int iBinpdf;
+	if(DEBUGGING && (sizeof(pdfBinDefs)/sizeof(pdfBinDefs[0]) != pdfBins + 1)){
+		printf("Error: FluxpdfBins don't allign with pdfBinDefs");
 	}
 	
 	for(iBinpdf = 0; iBinpdf < pdfBins; iBinpdf++){
@@ -244,6 +254,7 @@ double fluxPDF(double fluxIn, double *pdfBinDefs, int *pdfCounts, int pdfBins){
 			pdfCounts[iBinpdf]++;
 		}
 	}
+	return 0.0;
 }
 
 int main(int argc, char *argv[]){
