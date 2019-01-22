@@ -205,6 +205,7 @@ double fluxes(){
 
 void getParams(FILE *DEFile, FILE *WEFile){
 	char tmpStr[32];
+	int jBin;
 	
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.tau);
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.repsPerBin);
@@ -240,21 +241,47 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	insideRoi[0] = 0.0;
 	insideRoi[1] = 0.0;
 	
+	fluxCDF.Tinit = paramsWe.tauMax / 100;
+	fluxCDF.nT = paramsWe.tauMax / 100;
+	fluxCDF.fluxMax = 0;
+	for(jBin = 0; jBin < NFLUXBINS; jBin++){
+		fluxCDF.binCounts[jBin] = 0;
+	}
+	
 	printf("Parameters loaded\n");
 }
 
-double fluxPDF(double fluxIn, double *pdfBinDefs, int *pdfCounts, int pdfBins){
+void fluxPDF(double fluxIn){
 	int iBinpdf;
-	if(DEBUGGING && (sizeof(pdfBinDefs)/sizeof(pdfBinDefs[0]) != pdfBins + 1)){
-		printf("Error: FluxpdfBins don't allign with pdfBinDefs");
-	}
-	
-	for(iBinpdf = 0; iBinpdf < pdfBins; iBinpdf++){
-		if(fluxIn > pdfBinDefs[iBinpdf] && fluxIn < pdfBinDefs[iBinpdf+1]){
-			pdfCounts[iBinpdf]++;
+	for(iBinpdf = 0; iBinpdf < NFLUXBINS; iBinpdf++){
+		if(fluxIn > fluxCDF.binDefs[iBinpdf] && fluxIn < fluxCDF.binDefs[iBinpdf+1]){
+			fluxCDF.binCounts[iBinpdf]++;
 		}
 	}
-	return 0.0;
+}
+
+void fluxBin(){
+	int iBin;
+	double binStep;
+	fluxCDF.binDefs[0] = 0;
+	binStep = fluxCDF.fluxMax / NFLUXBINS;
+	for(iBin = 1; iBin < NFLUXBINS + 1; iBin++){
+		fluxCDF.binCounts[iBin] = (double)iBin*binStep;
+	}
+}
+
+void KSTest(){
+	double cdf1, cdf2, ksStat;
+	int iBin;
+	ksStat = 0;
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		cdf1 += (double)fluxCDF.oldCounts[iBin]/();
+		cdf2 += (double)fluxCDF.binCounts[iBin]/();
+		if (fabs(cdf1-cdf2)>ksStat){
+			ksStat = fabs(cdf1-cdf2);
+			fluxCDF.KSstat = ksStat;
+		}
+	}
 }
 
 int main(int argc, char *argv[]){
@@ -262,6 +289,7 @@ int main(int argc, char *argv[]){
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
+	double fluxAtStep;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
@@ -301,19 +329,24 @@ int main(int argc, char *argv[]){
 		if(DEBUGGING){
 		printf("Tau Step: %i \n", nWE);
 		}
+
+		FLFile = fopen(argv[2],"a");
+		fluxAtStep = fluxes();
+		fprintf(FLFile, "%E \n", fluxAtStep);
+		fluxPDF(fluxAtStep);
+		fclose(FLFile);
+		if(fluxAtStep > fluxCDF.fluxMax && nWE < fluxCDF.Tinit){
+			fluxCDF.fluxMax = 3*fluxAtStep;
+			fluxBin();
+		}
 		
-		if(nWE == 1){
+		if(nWE == 10){
 			start[1] = clock();
 		}
 		
-
-		FLFile = fopen(argv[2],"a");
-		fprintf(FLFile, "%E \n", fluxes());
-		fclose(FLFile);
-		
 		splitMerge(nWE);
 		
-		if(nWE ==1){
+		if(nWE ==10){
 			stop[1] = clock();
 		}
 		
@@ -328,11 +361,11 @@ int main(int argc, char *argv[]){
 			if(DEBUGGING){
 				printf("\n \n \n sim = %i \n \n \n",iSim);
 						 }
-			if(nWE == 1){
+			if(nWE == 10){
 				start[2] = clock();
 			}
 			dynamicsEngine(Reps.sims[iSim]);
-			if(nWE == 1){
+			if(nWE == 10){
 				stop[2] = clock();
 			}
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
