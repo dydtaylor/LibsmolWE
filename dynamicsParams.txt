@@ -2,4 +2,4 @@ dt		.000001
 worldL	3
 roiR	1
 difC	1
-nPart	20
+nPart	10

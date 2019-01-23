@@ -21,7 +21,7 @@
 
 #define SMOLTIMEMAX 10000
 
-#define NFLUXBINS 50
+#define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 1
 

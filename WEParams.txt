@@ -1,6 +1,6 @@
 tau			10
-repsPerBin 	500
-initialReps	200
-tauMax		100000
+repsPerBin 	100
+initialReps	100
+tauMax		50000
 nBins		25
 fluxBin		0

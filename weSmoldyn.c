@@ -241,9 +241,9 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	insideRoi[0] = 0.0;
 	insideRoi[1] = 0.0;
 	
-	fluxCDF.Tinit = paramsWe.tauMax / 100;
-	fluxCDF.nT = paramsWe.tauMax / 100;
-	fluxCDF.fluxMax = 0;
+	fluxCDF.Tinit = 100;
+	fluxCDF.nT = 100;
+	fluxCDF.fluxMax = 0.001;
 	for(jBin = 0; jBin < NFLUXBINS; jBin++){
 		fluxCDF.binCounts[jBin] = 0;
 	}
@@ -254,7 +254,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 void fluxAdd(double fluxIn){
 	int iBinpdf;
 	for(iBinpdf = 0; iBinpdf < NFLUXBINS; iBinpdf++){
-		if(fluxIn > fluxCDF.binDefs[iBinpdf] && fluxIn < fluxCDF.binDefs[iBinpdf+1]){
+		if(fluxIn >= fluxCDF.binDefs[iBinpdf] && fluxIn <= fluxCDF.binDefs[iBinpdf+1]){
 			fluxCDF.binCounts[iBinpdf]++;
 		}
 	}
@@ -285,8 +285,8 @@ void KSTest(){
 	cdf2 = 0;
 	ksStat = 0;
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
-		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT);
-		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT);
+		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT/2);
+		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT/2);
 		if (fabs(cdf1-cdf2)>ksStat){
 			ksStat = fabs(cdf1-cdf2);
 			fluxCDF.KSstat = ksStat;
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]){
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile;
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
@@ -332,6 +332,8 @@ int main(int argc, char *argv[]){
 		Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 		Reps.binContentsMax[Reps.binLocs[iSim]]++;
 	}
+	
+	fluxBin();
 
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
@@ -341,29 +343,40 @@ int main(int argc, char *argv[]){
 		if(DEBUGGING){
 		printf("Tau Step: %i \n", nWE);
 		}
-
 		FLFile = fopen(argv[2],"a");
 		fluxAtStep = fluxes();
 		fprintf(FLFile, "%E \n", fluxAtStep);
 		fluxAdd(fluxAtStep);
 		fclose(FLFile);
 		if(fluxAtStep > fluxCDF.fluxMax && nWE < fluxCDF.Tinit){
-			fluxCDF.fluxMax = 3*fluxAtStep;
+			fluxCDF.fluxMax = fluxAtStep;
 			fluxBin();
+			ksFile = fopen("ksOut.txt", "a");
+			for(iBin = 0; iBin < NFLUXBINS+1; iBin++){
+				fprintf(ksFile, "%E ", fluxCDF.binDefs[iBin]);
+			}
+			fprintf(ksFile,"\n");
+			fclose(ksFile);
 		}
 		
 		if(nWE == 10){
 			start[1] = clock();
 		}
 		
-		if(nWE == 2*fluxCDF.nT){
+		if(nWE == fluxCDF.nT){
+			ksFile = fopen("ksOut.txt","a");
+			for(iBin = 0; iBin < NFLUXBINS; iBin++){
+				fprintf(ksFile, "%i ", fluxCDF.binCounts[iBin]);
+			}
+			fprintf(ksFile,"\n");
+			for(iBin = 0; iBin < NFLUXBINS; iBin++){
+				fprintf(ksFile, "%i ", fluxCDF.oldCounts[iBin]);
+			}
+			fprintf(ksFile, "\n");
 			KSTest();
-			if (fluxCDF.KSstat > KSCRITICAL){
-				fluxCDF.nT *= 2;
-			}
-			if (fluxCDF.KSstat <= KSCRITICAL){
-				fluxCDF.nT = nWE;
-			}
+			fprintf(ksFile, "ksStat: %E \n nT: %i \n", fluxCDF.KSstat, fluxCDF.nT);
+			fclose(ksFile);
+			fluxCDF.nT *= 2;
 		}
 		
 		splitMerge(nWE);
