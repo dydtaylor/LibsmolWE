@@ -22,8 +22,8 @@
 #define SMOLTIMEMAX 10000
 
 #define NFLUXBINS 50
-
-#define DEBUGGING 0
+#define KSCRITICAL .02
+#define DEBUGGING 1
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;

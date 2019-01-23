@@ -251,7 +251,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	printf("Parameters loaded\n");
 }
 
-void fluxPDF(double fluxIn){
+void fluxAdd(double fluxIn){
 	int iBinpdf;
 	for(iBinpdf = 0; iBinpdf < NFLUXBINS; iBinpdf++){
 		if(fluxIn > fluxCDF.binDefs[iBinpdf] && fluxIn < fluxCDF.binDefs[iBinpdf+1]){
@@ -266,22 +266,34 @@ void fluxBin(){
 	fluxCDF.binDefs[0] = 0;
 	binStep = fluxCDF.fluxMax / NFLUXBINS;
 	for(iBin = 1; iBin < NFLUXBINS + 1; iBin++){
-		fluxCDF.binCounts[iBin] = (double)iBin*binStep;
+		fluxCDF.binDefs[iBin] = (double)iBin*binStep;
+	}
+}
+
+void appendBins(){
+	int iBin;
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		fluxCDF.oldCounts[iBin] += fluxCDF.binCounts[iBin];
+		fluxCDF.binCounts[iBin] = 0;
 	}
 }
 
 void KSTest(){
 	double cdf1, cdf2, ksStat;
 	int iBin;
+	cdf1 = 0;
+	cdf2 = 0;
 	ksStat = 0;
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
-		cdf1 += (double)fluxCDF.oldCounts[iBin]/();
-		cdf2 += (double)fluxCDF.binCounts[iBin]/();
+		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT);
+		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT);
 		if (fabs(cdf1-cdf2)>ksStat){
 			ksStat = fabs(cdf1-cdf2);
 			fluxCDF.KSstat = ksStat;
 		}
 	}
+	
+	appendBins();
 }
 
 int main(int argc, char *argv[]){
@@ -333,7 +345,7 @@ int main(int argc, char *argv[]){
 		FLFile = fopen(argv[2],"a");
 		fluxAtStep = fluxes();
 		fprintf(FLFile, "%E \n", fluxAtStep);
-		fluxPDF(fluxAtStep);
+		fluxAdd(fluxAtStep);
 		fclose(FLFile);
 		if(fluxAtStep > fluxCDF.fluxMax && nWE < fluxCDF.Tinit){
 			fluxCDF.fluxMax = 3*fluxAtStep;
@@ -344,7 +356,18 @@ int main(int argc, char *argv[]){
 			start[1] = clock();
 		}
 		
+		if(nWE == 2*fluxCDF.nT){
+			KSTest();
+			if (fluxCDF.KSstat > KSCRITICAL){
+				fluxCDF.nT *= 2;
+			}
+			if (fluxCDF.KSstat <= KSCRITICAL){
+				fluxCDF.nT = nWE;
+			}
+		}
+		
 		splitMerge(nWE);
+		
 		
 		if(nWE ==10){
 			stop[1] = clock();
