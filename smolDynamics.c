@@ -29,7 +29,7 @@ void initialDist(int nInit){
 	for(jSim = 0; jSim < nInit; jSim++){
 		//Molecules + BCs
 		simSetup(jSim);
-		smolAddSolutionMolecules(Reps.sims[jSim], "A", paramsDe.nPart, lowBounds, highBounds);
+		smolAddSolutionMolecules(Reps.sims[jSim], "A", paramsDe.nPart, NULL, NULL);
 		smolUpdateSim(Reps.sims[jSim]);
 		//Reps.sims[jSim]->logfile = nulldev;
 	}
