@@ -30,6 +30,7 @@ void initialDist(int nInit){
 		//Molecules + BCs
 		simSetup(jSim);
 		smolAddSolutionMolecules(Reps.sims[jSim], "A", paramsDe.nPart, lowBounds, highBounds);
+		smolUpdateSim(Reps.sims[jSim]);
 		//Reps.sims[jSim]->logfile = nulldev;
 	}
 }
