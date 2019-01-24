@@ -1,0 +1,14 @@
+#!/bin/bash
+#$ -N 
+#$ -q bio,abio,free64,pub64
+#$ -ckpt blcr
+#$ -e logs/.err
+#$ -o logs/.log
+cd /pub/mbovyn/
+echo Running on host `hostname`
+echo Time is `date`
+echo Directory is `pwd`
+# Run executable
+#motors.x instance_name repeat verbose keep_seed
+./motors.x   2 0
+echo Finished at `date`

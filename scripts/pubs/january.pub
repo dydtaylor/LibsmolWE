@@ -1,0 +1,14 @@
+#!/bin/bash
+#$ -N january
+#$ -q bio,abio,free64,pub64
+#$ -ckpt restart
+#$ -e january.err
+#$ -o january.log
+cd /data/users/robertbt/WELibsmolData/Data/january
+echo Running on host `hostname`
+echo Time is `date`
+echo Directory is `pwd`
+# Run executable
+
+./weSmoldyn january.Out january.Flux january.Err 0 january.Time
+echo Finished at `date`
