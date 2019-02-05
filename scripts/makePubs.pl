@@ -19,7 +19,9 @@
 #\$ -ckpt restart
 #\$ -e $run_name.err
 #\$ -o $run_name.log
-cd /data/users/robertbt/WELibsmolData/Data/$run_name
+cd /data/users/robertbt/WELibsmolData/$run_name
+LD_LIBRARY_PATH=/data/users/robertbt/lib
+export LD_LIBRARY_PATH
 echo Running on host `hostname`
 echo Time is `date`
 echo Directory is `pwd`
