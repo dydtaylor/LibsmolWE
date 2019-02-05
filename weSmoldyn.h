@@ -41,8 +41,12 @@ struct paramsDynamicsEngine{
 	double dt; // Timestep of dynamics engine
 	double worldLength;
 	double roiR;
-	double difC;
+	double difM;
+	double difD;
+	double bindR;
+	double unbindK;
 	int nPart;
+	int reactBit;
 } ;
 
 struct replicas{
