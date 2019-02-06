@@ -1,5 +1,9 @@
 dt		.000001
 worldL	3
 roiR	1
-difC	1
+difM	1
+difD	0.5
+bindR	.01
+unbindK	.01
 nPart	10
+reactBit 1

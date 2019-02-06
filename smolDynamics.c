@@ -43,8 +43,6 @@ void initialDist(int nInit){
 	double roiParams[] = {0.0, 0.0, 1, 30};
 	double insideRoi[] = {0.0, 0.0};
 	char const* monomer = "A";
-	
-	if(paramsDe.reactBit > 0){
 	char const* dimer = "B";
 	char const** dimerptr = &dimer;
 	enum MolecState outputStates[2];
@@ -56,7 +54,7 @@ void initialDist(int nInit){
 	strcpy(unbindProducts[1],monomer);
 	outputStates[0] = MSsoln;
 	outputStates[1] = MSsoln;
-	}
+	
 	
 	for(jSim = 0; jSim < nInit; jSim++){
 		//Molecules + BCs
@@ -67,7 +65,7 @@ void initialDist(int nInit){
 		
 		smolAddMolList(Reps.sims[jSim],"mList");
 		smolAddSpecies(Reps.sims[jSim],monomer,"mList");
-		smolSetSpeciesMobility(Reps.sims[jSim],monomer,MSall, paramsDe.difM, 0, 0);
+		smolSetSpeciesMobility(Reps.sims[jSim],monomer,MSall, paramsDe.difM, NULL, NULL);
 		smolSetMaxMolecules(Reps.sims[jSim],paramsDe.nPart);
 		smolAddSolutionMolecules(Reps.sims[jSim], monomer, paramsDe.nPart, lowBounds, highBounds);
 		smolAddSurface(Reps.sims[jSim], "bounds");
@@ -88,10 +86,10 @@ void initialDist(int nInit){
 		if(paramsDe.reactBit > 0){
 			smolAddMolList(Reps.sims[jSim],"dList");
 			smolAddSpecies(Reps.sims[jSim], dimer, "dList");
-			smolSetSpeciesMobility(Reps.sims[jSim],dimer, MSall, paramsDe.difD);
-			smolAddReaction(mainSim, "binding", monomer, MSsoln, monomer, MSsoln, 1, dimerptr, &outputStates[0], -1);
-			smolSetReactionRate(mainSim, "binding", paramsDe.bindR, 1); //This line allows us to set the rate by the binding radius rather than kOn
-			smolAddReaction(mainSim, "unbinding", dimer, MSsoln, NULL , MSnone, 2,(const char**) unbindProducts, outputStates, paramsDe.unbindK);
+			smolSetSpeciesMobility(Reps.sims[jSim],dimer, MSall, paramsDe.difD, NULL, NULL);
+			smolAddReaction(Reps.sims[jSim], "binding", monomer, MSsoln, monomer, MSsoln, 1, dimerptr, &outputStates[0], -1);
+			smolSetReactionRate(Reps.sims[jSim], "binding", paramsDe.bindR, 1); //This line allows us to set the rate by the binding radius rather than kOn
+			smolAddReaction(Reps.sims[jSim], "unbinding", dimer, MSsoln, NULL , MSnone, 2,(const char**) unbindProducts, outputStates, paramsDe.unbindK);
 		}
 
 		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt all = 0 roiComp stop");
@@ -127,7 +125,7 @@ void copySim1(int simIn, int simOut){
 	Takes simIn, reads molecule locations from the sim, then makes a new sim with molecules at the same locations. Most parameters / lines of code are identical to the sim made through initialDist
 	*/
 	
-	int nMol;
+	int nList, nMol;
 	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
@@ -136,28 +134,32 @@ void copySim1(int simIn, int simOut){
 	double topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
 	double roiParams[] = {0.0, 0.0, 1, 30};
 	double insideRoi[] = {0.0, 0.0};
-	char const* monomer = "A";
 	
-	if(paramsDe.reactBit > 0){
+	char const* monomer = "A";
 	char const* dimer = "B";
 	char const** dimerptr = &dimer;
 	enum MolecState outputStates[2];
-	char **unbindProducts;
+	char **unbindProducts, **stateList;
 	unbindProducts = (char**) calloc(2,sizeof(char*));
+	stateList = (char**) calloc(2,sizeof(char*));
 	unbindProducts[0] = (char*) calloc(256,sizeof(char));
 	unbindProducts[1] = (char*) calloc(256,sizeof(char));
+	stateList[0] = (char*) calloc(256, sizeof(char));
+	stateList[1] = (char*) calloc(256, sizeof(char));
 	strcpy(unbindProducts[0],monomer);
 	strcpy(unbindProducts[1],monomer);
+	strcpy(stateList[0],monomer);
+	strcpy(stateList[1],dimer);
 	outputStates[0] = MSsoln;
 	outputStates[1] = MSsoln;
-	}
 	
 	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
 	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
 	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);
 	smolSetSimTimes(Reps.sims[simOut], 0, 10000, paramsDe.dt); //Reps.sims[simIn]->time is another option
-	smolAddSpecies(Reps.sims[simOut], "A", NULL);
-	smolSetSpeciesMobility(Reps.sims[simOut], "A", MSall, paramsDe.difC,0,0);
+	smolAddMolList(Reps.sims[simOut],"mList");
+	smolAddSpecies(Reps.sims[simOut], "A", "mList");
+	smolSetSpeciesMobility(Reps.sims[simOut], "A", MSall, paramsDe.difM, NULL, NULL);
 	smolSetMaxMolecules(Reps.sims[simOut],paramsDe.nPart);
 	smolAddSurface(Reps.sims[simOut],"bounds");
 	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-x", topRightCornerRect);
@@ -172,17 +174,32 @@ void copySim1(int simIn, int simOut){
 	smolAddCompartment(Reps.sims[simOut],"roiComp");
 	smolAddCompartmentSurface(Reps.sims[simOut],"roiComp","roi");
 	smolAddCompartmentPoint(Reps.sims[simOut],"roiComp",insideRoi);
+	
+	if(paramsDe.reactBit > 0){
+			smolAddMolList(Reps.sims[simOut],"dList");
+			smolAddSpecies(Reps.sims[simOut], dimer, "dList");
+			smolSetSpeciesMobility(Reps.sims[simOut],dimer, MSall, paramsDe.difD, NULL, NULL);
+			smolAddReaction(Reps.sims[simOut], "binding", monomer, MSsoln, monomer, MSsoln, 1, dimerptr, &outputStates[0], -1);
+			smolSetReactionRate(Reps.sims[simOut], "binding", paramsDe.bindR, 1); //This line allows us to set the rate by the binding radius rather than kOn
+			smolAddReaction(Reps.sims[simOut], "unbinding", dimer, MSsoln, NULL , MSnone, 2,(const char**) unbindProducts, outputStates, paramsDe.unbindK);
+	}
 		
 	smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt all = 0 roiComp stop");
 	//The following for loop is the major difference between this and the initial configuration simulation building.
-	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
-		smolAddSolutionMolecules(Reps.sims[simOut], "A", 1, Reps.sims[simIn]->mols->live[0][nMol]->pos,Reps.sims[simIn]->mols->live[0][nMol]->pos);
+	
+	
+	for(nList = 0; nList < Reps.sims[simIn]->mols->nlist; nList++){
+		for(nMol = 0; nMol < Reps.sims[simIn]->mols->nl[nList];nMol++){
+			smolAddSolutionMolecules(Reps.sims[simOut], stateList[nList], 1, Reps.sims[simIn]->mols->live[nList][nMol]->pos,Reps.sims[simIn]->mols->live[nList][nMol]->pos);
+	}
 	}
 	smolUpdateSim(Reps.sims[simOut]);
 	//Print statement to check functionality. Note molecule indices get changed but everything else preserved
-	for(nMol = 0; nMol < paramsDe.nPart; nMol++){
-		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simOut]->mols->live[0][nMol]->pos[0],Reps.sims[simOut]->mols->live[0][nMol]->pos[1]);
-		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simIn]->mols->live[0][nMol]->pos[0],Reps.sims[simIn]->mols->live[0][nMol]->pos[1]);
+	for(nList = 0; nList < Reps.sims[simIn]->mols->nlist; nList++){
+		for(nMol = 0; nMol < Reps.sims[simIn]->mols->nl[nList];nMol++){
+		printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simOut]->mols->live[nList][nMol]->pos[0],Reps.sims[simOut]->mols->live[nList][nMol]->pos[1]);
+		printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simIn]->mols->live[nList][nMol]->pos[0],Reps.sims[simIn]->mols->live[nList][nMol]->pos[1]);
+		}
 	}
 }
 
