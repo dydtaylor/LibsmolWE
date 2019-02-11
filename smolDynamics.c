@@ -119,6 +119,14 @@ int findBin(simptr currentSim){
 	return nInBin;
 }
 
+void freeAllSims(){
+	int jSim
+	for(jSim = 0; jSim <=Reps.iSimMax; jSim++){
+	smolFreeSim(Reps.sims[jSim]);
+	}
+	return 0
+}
+
 void copySim1(int simIn, int simOut){
 
 	/*

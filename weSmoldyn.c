@@ -309,7 +309,7 @@ int main(int argc, char *argv[]){
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile;
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
@@ -424,6 +424,11 @@ int main(int argc, char *argv[]){
 	}
 	fclose(SIMFile);
 
-
+	mCountsFile = fopen("mCounts.txt, "a");
+	for(iBin = 0; iBin <= Reps.iSimMax; iBin++){
+		fprintf(mCountsFile, "%i, %i, %E \n", Reps.sims[iBin]->nl[0], Reps.sims[iBin]->nl[1], Reps.weights[iBin]); //Change later to not have hard code
+	}
+	fclose(mCountsFile);
+	freeAllSims();
 	return 0;
 }
