@@ -14,16 +14,17 @@
 #define RANDINT genrand_int32()
 #define PI 3.14159265
 
-#define NBINSMAX 100
+#define NBINSMAX 50
 #define BINCONTENTSMAXMAX 50000
 #define ISIMMAXMAX 50000
 #define NULLDEVICE "/dev/null"
 
 #define SMOLTIMEMAX 10000
 
-#define NFLUXBINS 75
+#define NFLUXBINS 200
 #define KSCRITICAL .02
 #define DEBUGGING 1
+#define MOLTYPES 2
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;

@@ -424,9 +424,9 @@ int main(int argc, char *argv[]){
 	}
 	fclose(SIMFile);
 
-	mCountsFile = fopen("mCounts.txt, "a");
+	mCountsFile = fopen("mCounts.txt", "a");
 	for(iBin = 0; iBin <= Reps.iSimMax; iBin++){
-		fprintf(mCountsFile, "%i, %i, %E \n", Reps.sims[iBin]->nl[0], Reps.sims[iBin]->nl[1], Reps.weights[iBin]); //Change later to not have hard code
+		fprintf(mCountsFile, "%i, %i, %E \n", Reps.sims[iBin]->mols->nl[0], Reps.sims[iBin]->mols->nl[1], Reps.weights[iBin]); //Change later to not have hard code
 	}
 	fclose(mCountsFile);
 	freeAllSims();
