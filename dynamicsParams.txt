@@ -3,7 +3,7 @@ worldL	3
 roiR	1
 difM	1
 difD	0.5
-bindR	1
-unbindK	.01
-nPart	10
+bindR	.005
+unbindK	.05
+nPart	20
 reactBit 1

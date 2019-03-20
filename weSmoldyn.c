@@ -117,13 +117,13 @@ void splitMerge(int nWE){
 			Reps.binContents[-1+Reps.binContentsMax[mergeBin]][mergeBin] = NAN;
 			Reps.binContentsMax[mergeBin]--;
 
-			for(entryCheck1 = 0; entryCheck1 < Reps.binContentsMax[mergeBin]-1;entryCheck1++){
+			/*for(entryCheck1 = 0; entryCheck1 < Reps.binContentsMax[mergeBin]-1;entryCheck1++){
 				for(entryCheck2 = entryCheck1 + 1; entryCheck2< Reps.binContentsMax[mergeBin]; entryCheck2++){
 					if(DEBUGGING && Reps.binContents[entryCheck1][mergeBin]==Reps.binContents[entryCheck2][mergeBin]){
 						printf("ERROR: Duplicate entries in BC \n");
 					}
 				} // finished entryCheck2 loop through this bin's contents
-			} // finished entryCheck1 loop through this bin's contents
+			} // finished entryCheck1 loop through this bin's contents */
 		} // finished while-loop to check this bin
 	} // finished merging loop through bins
 
@@ -300,16 +300,28 @@ void KSTest(){
 	appendBins();
 }
 
+int nanCount(){
+	int iReps;
+	int nanCounter = 0;
+	for(iReps = 0; iReps <= Reps.iSimMax; iReps++){
+		if(Reps.weights[iReps] != Reps.weights[iReps]){
+			nanCounter++;
+		}
+	}
+	
+	return nanCounter;
+}
+
 int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim;
+	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim, firstNan, iBcm, nanCounter;
 	double fluxAtStep;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile, *oldSim, *curSim;
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
@@ -341,6 +353,8 @@ int main(int argc, char *argv[]){
 
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
+	firstNan = 0;
+	nanCounter = 0;
 
 	//First quarter simulation
 	for(nWE = 0; nWE < tauMax; nWE++){
@@ -352,6 +366,37 @@ int main(int argc, char *argv[]){
 		fprintf(FLFile, "%E \n", fluxAtStep);
 		fluxAdd(fluxAtStep);
 		fclose(FLFile);
+		
+		if(nanCounter == 0 && firstNan == 0){
+		oldSim = fopen("oldSim.txt", "w");
+		for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
+			fprintf(oldSim, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
+		}
+		fprintf(oldSim, "\n \n \n \n \n \n");
+		for(iBin = 0; iBin < Reps.nBins; iBin++){
+			for(iBcm = 0; iBcm < Reps.binContentsMax[iBin]; iBcm++){
+				fprintf(oldSim, "%i ", Reps.binContents[iBcm][iBin]);
+			}
+			fprintf(oldSim, "\n");
+		}
+		fclose(oldSim);
+		}
+		
+		if(nanCounter > 0 && firstNan == 0){
+		curSim = fopen("currentSim.txt","w");
+		for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
+			fprintf(curSim, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
+		}
+		fprintf(oldSim, "\n \n \n \n \n \n");
+		for(iBin = 0; iBin < Reps.nBins; iBin++){
+			for(iBcm = 0; iBcm < Reps.binContentsMax[iBin]; iBcm++){
+				fprintf(curSim, "%i ", Reps.binContents[iBcm][iBin]);
+			}
+		fprintf(curSim, "\n");
+		}
+		fclose(curSim);
+		firstNan = 1;
+		}
 		if(fluxAtStep > fluxCDF.fluxMax && nWE < fluxCDF.Tinit){
 			fluxCDF.fluxMax = fluxAtStep;
 			fluxBin();
@@ -383,7 +428,15 @@ int main(int argc, char *argv[]){
 			fluxCDF.nT *= 2;
 		}
 		
+		nanCounter = nanCount();
+		
 		splitMerge(nWE);
+		
+		if(nanCounter > nanCount()){
+			errFile = fopen(argv[3], "a");
+			fprintf(errFile, "NAN introduced by splitMerge at Tau = %i", nWE);
+			fclose(errFile);
+		}
 		
 		
 		if(nWE ==10){

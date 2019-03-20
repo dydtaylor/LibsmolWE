@@ -101,7 +101,7 @@ void initialDist(int nInit){
 
 
 void dynamicsEngine(simptr currentSim){
-	smolRunSimUntil(currentSim,(double)(currentSim->time) + (1000*paramsDe.dt) );
+	smolRunSimUntil(currentSim,(double)(currentSim->time) + (paramsWe.tau*paramsDe.dt) );
 	smolUpdateSim(currentSim);
 }
 
