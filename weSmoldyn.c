@@ -367,7 +367,7 @@ int main(int argc, char *argv[]){
 		fluxAdd(fluxAtStep);
 		fclose(FLFile);
 		
-		if(nanCounter == 0 && firstNan == 0){
+		if(DEBUGGING && nanCounter == 0 && firstNan == 0){
 		oldSim = fopen("oldSim.txt", "w");
 		for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
 			fprintf(oldSim, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
@@ -382,7 +382,7 @@ int main(int argc, char *argv[]){
 		fclose(oldSim);
 		}
 		
-		if(nanCounter > 0 && firstNan == 0){
+		if(DEBUGGING && nanCounter > 0 && firstNan == 0){
 		curSim = fopen("currentSim.txt","w");
 		for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
 			fprintf(curSim, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
@@ -428,11 +428,13 @@ int main(int argc, char *argv[]){
 			fluxCDF.nT *= 2;
 		}
 		
+		if(DEBUGGING){
 		nanCounter = nanCount();
+		}
 		
 		splitMerge(nWE);
 		
-		if(nanCounter > nanCount()){
+		if(DEBUGGING && nanCounter > nanCount()){
 			errFile = fopen(argv[3], "a");
 			fprintf(errFile, "NAN introduced by splitMerge at Tau = %i", nWE);
 			fclose(errFile);
