@@ -222,7 +222,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.unbindK);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.nPart);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.reactBit);
-	paramsWe.fluxBin = 0;
+	//paramsWe.fluxBin = 0;
 	Reps.iSimMax = paramsWe.nInit -1;
 	fclose(DEFile);
 	fclose(WEFile);
@@ -300,103 +300,85 @@ void KSTest(){
 	appendBins();
 }
 
-int nanCount(){
-	int iReps;
-	int nanCounter = 0;
-	for(iReps = 0; iReps <= Reps.iSimMax; iReps++){
-		if(Reps.weights[iReps] != Reps.weights[iReps]){
-			nanCounter++;
-		}
-	}
-	
-	return nanCounter;
-}
-
 int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauQuarter, tauMax, rngBit, iBin, nWE, iSim, firstNan, iBcm, nanCounter;
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN; //tauQuarter omitted
 	double fluxAtStep;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile, *oldSim, *curSim;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile;
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
 	
+	
 	getParams(DEFile, WEFile);
 
-	tauQuarter = paramsWe.tauMax / 4;
 	tauMax = paramsWe.tauMax;
-
-	printf("Tau loops + flux vector made \n");
-
+	debugFile = fopen("Debug.txt","a");
+	fprintf(debugFile,"Tau loops + flux vector made \n");
+	fclose(debugFile);
 	//Set + record new RNG seed, set up initial distribution
 	rngBit = atoi(argv[4]);
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
+	fprintf(errFile, "fluxBin = %i \n", paramsWe.fluxBin);
+	if(!STOPCOMMAND){
+		fprintf(errFile, "Simulations do NOT stop upon evacuation \n");
+	}
+	if(!WEENABLE){
+		fprintf(errFile, "Weighted Ensemble process is deactivated \n");
+	}
+	if(paramsWe.fluxBin < 0){
+		fprintf(errFile, "Flux measurement disabled \n");
+	}
     fclose(errFile);
 	start[0] = clock();
-	start[3] = clock();
 	initialDist(paramsWe.nInit);
 	stop[0] = clock();
+	debugFile = fopen("Debug.txt","a");
+	fprintf(debugFile, "Initial Distribution Made \n");
+	fclose(debugFile);
 	//Set other key initial values in replicas struct
 	for(iSim = 0; iSim < paramsWe.nInit; iSim++){
-		Reps.weights[iSim] = (double)1/paramsWe.repsPerBin;
+		Reps.weights[iSim] = (double)1/paramsWe.nInit;
 		Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 		Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 		Reps.binContentsMax[Reps.binLocs[iSim]]++;
 	}
-	
+	nanCheck = 0;
+	firstNAN = 0;
 	fluxBin();
 
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
-	firstNan = 0;
-	nanCounter = 0;
 
-	//First quarter simulation
+	start[3] = clock();
+	
+	//Simulation Loop
 	for(nWE = 0; nWE < tauMax; nWE++){
-		if(DEBUGGING){
-		printf("Tau Step: %i \n", nWE);
-		}
+		
+		//Print current tau step to stdout for interactive debugging
+		debugFile = fopen("Debug.txt","a");
+		fprintf(debugFile,"Tau Step: %i \n", nWE);
+		fclose(debugFile);
+		
+		//Flux Recording
+		if(paramsWe.fluxBin >= 0){
 		FLFile = fopen(argv[2],"a");
 		fluxAtStep = fluxes();
 		fprintf(FLFile, "%E \n", fluxAtStep);
 		fluxAdd(fluxAtStep);
 		fclose(FLFile);
-		
-		if(DEBUGGING && nanCounter == 0 && firstNan == 0){
-		oldSim = fopen("oldSim.txt", "w");
-		for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
-			fprintf(oldSim, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
-		}
-		fprintf(oldSim, "\n \n \n \n \n \n");
-		for(iBin = 0; iBin < Reps.nBins; iBin++){
-			for(iBcm = 0; iBcm < Reps.binContentsMax[iBin]; iBcm++){
-				fprintf(oldSim, "%i ", Reps.binContents[iBcm][iBin]);
+			if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"Flux Recorded \n");
+				fclose(debugFile);
 			}
-			fprintf(oldSim, "\n");
 		}
-		fclose(oldSim);
-		}
-		
-		if(DEBUGGING && nanCounter > 0 && firstNan == 0){
-		curSim = fopen("currentSim.txt","w");
-		for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
-			fprintf(curSim, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
-		}
-		fprintf(oldSim, "\n \n \n \n \n \n");
-		for(iBin = 0; iBin < Reps.nBins; iBin++){
-			for(iBcm = 0; iBcm < Reps.binContentsMax[iBin]; iBcm++){
-				fprintf(curSim, "%i ", Reps.binContents[iBcm][iBin]);
-			}
-		fprintf(curSim, "\n");
-		}
-		fclose(curSim);
-		firstNan = 1;
-		}
+		//KS Bin Definitions
 		if(fluxAtStep > fluxCDF.fluxMax && nWE < fluxCDF.Tinit){
 			fluxCDF.fluxMax = fluxAtStep;
 			fluxBin();
@@ -408,10 +390,12 @@ int main(int argc, char *argv[]){
 			fclose(ksFile);
 		}
 		
+		//Single Step Time Measurement
 		if(nWE == 10){
 			start[1] = clock();
 		}
 		
+		//KS Recording
 		if(nWE == fluxCDF.nT){
 			ksFile = fopen("ksOut.txt","a");
 			for(iBin = 0; iBin < NFLUXBINS; iBin++){
@@ -426,36 +410,95 @@ int main(int argc, char *argv[]){
 			fprintf(ksFile, "ksStat: %E \n nT: %i \n", fluxCDF.KSstat, fluxCDF.nT);
 			fclose(ksFile);
 			fluxCDF.nT *= 2;
+			if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"KS Recorded \n");
+				fclose(debugFile);
+			}
 		}
+		
+		//Storing replicas struct without any stray NANs
+		if(nanCheck == 0){
+			structStoreFile = fopen("SimStructs.txt", "w");
+			fprintf(structStoreFile, "Tau = %i \n", nWE);
+			for(iSim = 0; iSim < Reps.iSimMax; iSim++){
+				fprintf(structStoreFile, "%i %E \n", Reps.binLocs[iSim], Reps.weights[iSim]);
+			}
+			for(iBin = 0; iBin < NBINSMAX; iBin++){
+				for(iBCM = 0; iBCM < Reps.binContentsMax[iBin]; iBCM++){
+					fprintf(structStoreFile, "%i ", Reps.binContents[iBCM][iBin]);
+				}
+				fprintf(structStoreFile, "\n");
+			}
+			fclose(structStoreFile);
+		}
+		
+		//Splitting and Merging
+		if(WEENABLE){
+			if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"Split Merge Starting... \n");
+				fclose(debugFile);
+			}
+		splitMerge(nWE);
+			if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"Split Merge completed \n Checking for NANs \n");
+				fclose(debugFile);
+			}
+		}
+		
+		
+		//Checking for first appearance of stray NANs
+		/*for(iSim = 0; (iSim < Reps.iSimMax || nanCheck == 0); iSim++){
+			if(Reps.weights[iSim] != Reps.weights[iSim]){
+				nanCheck = 1;
+			}
+		}*/
 		
 		if(DEBUGGING){
-		nanCounter = nanCount();
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"Nans checked \n");
+				fclose(debugFile);
+			}
+		
+		//Recording stray NANs (only the first time they appear)
+		/*if(nWE == 0){
+		if((nanCheck == 1 && firstNAN == 0)){
+			structNANFile = fopen("nanStructs.txt","w");
+			for(iSim = 0; iSim < Reps.iSimMax; iSim++){
+				fprintf(structNANFile, "%i %E \n", Reps.binLocs[iSim],Reps.weights[iSim]);
+			}
+			for(iBin = 0; iBin < NBINSMAX; iBin++){
+				for(iBCM = 0; iBCM < Reps.binContentsMax[iBin]; iBCM++){
+					fprintf(structNANFile, "%i ", Reps.binContents[iBCM][iBin]);
+				}
+				fprintf(structNANFile, "\n");
+			}
+			fclose(structNANFile);
+			firstNAN = 1;
 		}
-		
-		splitMerge(nWE);
-		
-		if(DEBUGGING && nanCounter > nanCount()){
-			errFile = fopen(argv[3], "a");
-			fprintf(errFile, "NAN introduced by splitMerge at Tau = %i", nWE);
-			fclose(errFile);
-		}
-		
+		}*/
 		
 		if(nWE ==10){
 			stop[1] = clock();
 		}
 		
 		if(DEBUGGING){
-			printf("iSimMax: %i \n", Reps.iSimMax);
+			debugFile = fopen("Debug.txt","a");
+			fprintf(debugFile,"NANs checked and recorded. iSimMax = %i \n Dynamics Starting \n", Reps.iSimMax);
+			fclose(debugFile);
 		}
 		
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
-			if(DEBUGGING){
-				printf("\n \n \n sim = %i \n \n \n",iSim);
-						 }
+			/*if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"Sim %i dynamics starting  \n", iSim);
+				fclose(debugFile);
+						 }*/
 			if(nWE == 10){
 				start[2] = clock();
 			}
@@ -467,23 +510,40 @@ int main(int argc, char *argv[]){
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 		}
+		debugFile = fopen("Debug.txt","a");
+		fprintf(debugFile,"Dynamics Finished  \n");
+		fclose(debugFile);
 	}
+	
 	stop[3] = clock();
 
+	
+	//Time Recording
 	clockFile = fopen(argv[5],"w");
 	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
+	fclose(clockFile);
 
+	//Final Equilibrium Recording
+	debugFile = fopen("Debug.txt","a");
+	fprintf(debugFile,"Recording final sims  \n");
+	fclose(debugFile);
 	SIMFile = fopen(argv[1], "w");
 	for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
 		fprintf(SIMFile, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
 	}
 	fclose(SIMFile);
 
+	//Molecule counts recording
+	debugFile = fopen("Debug.txt","a");
+	fprintf(debugFile,"Recording mCounts  \n");
+	fclose(debugFile);
 	mCountsFile = fopen("mCounts.txt", "a");
 	for(iBin = 0; iBin <= Reps.iSimMax; iBin++){
 		fprintf(mCountsFile, "%i, %i, %E \n", Reps.sims[iBin]->mols->nl[0], Reps.sims[iBin]->mols->nl[1], Reps.weights[iBin]); //Change later to not have hard code
 	}
 	fclose(mCountsFile);
+	
+	//Free Memory and finish
 	freeAllSims();
 	return 0;
 }

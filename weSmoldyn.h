@@ -14,17 +14,19 @@
 #define RANDINT genrand_int32()
 #define PI 3.14159265
 
-#define NBINSMAX 50
+#define NBINSMAX 220
 #define BINCONTENTSMAXMAX 50000
 #define ISIMMAXMAX 50000
 #define NULLDEVICE "/dev/null"
 
 #define SMOLTIMEMAX 10000
 
-#define NFLUXBINS 200
+#define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 1
-#define MOLTYPES 2
+#define STOPCOMMAND 0
+#define WEENABLE 1
+#define ROBINS 1
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
@@ -32,7 +34,7 @@ struct paramsWeightedEnsemble{
 	unsigned int tauMax; //Number of weighted ensemble steps to do, max sim time.
 			// If tauMax = 1000, tau = 10, dt = .005, then sim will end at t=tauMax*tau*dt = 50;
 	unsigned int nBins;
-	unsigned int fluxBin;
+	int fluxBin;
 	unsigned int nInit;
 	double binDefs[NBINSMAX];
 } ;

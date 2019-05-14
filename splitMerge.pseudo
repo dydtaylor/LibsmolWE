@@ -1,0 +1,29 @@
+void splitMerge
+	int binMin = 0
+	int binMax = Reps.nBins
+	unsigned int dummyInd
+	
+	Merge sims for BCM > mtarg together. For each bin:
+		While BCM > mtarg
+			scan BCM for two sims with smallest weights. 
+				Check weight of every sim listed in the bin for BCM
+				if it is lower than the weight associated with one of the two "lowest" weight indices we have recorded already, replace the larger of the two with the new one
+			probabilistically decide which of the two to keep
+			for the index that's kept, add previous weight to it
+			Go through BC matrix for iSimMax's bin, find ISM in the matrix and replace it in BC matrix with the index of the sim to be deleted
+			if iSimMax IS the sim that will be deleted, replace it in BC matrix with the last index in the BC matrix
+			Replace the deleted simulation
+				Free sim of deleted index. Move iSimMax to the deleted index.
+				Remove weights, then de-increment iSimMax
+			Replace the deleted index in the BC matrix with the last index in the BC matrix
+			Delete the last index in the BC matrix
+			Deincrement BCM
+	
+	Split sims for BCM < mtarg
+		While BCM > mtarg
+			Scan for BCM sim with greatest weight
+			Copy the sim to iSimMax+1
+			half the wegith of split sim, move the other half to iSimMax+1
+			increment ISimMax
+			Add index to BC Matrix
+			increment BCM
