@@ -12,7 +12,7 @@ void splitMerge(int nWE){
 	int mergeInd[2]; /* Array containing indices of 2 elements to be merged*/
 	int keptInd[2]; /*Previous array, reordered s.t. the first index is the one that will be kept*/
 	int splitInd; /* Index of replica to split*/
-	int splitBin, mergeBin, repInBin, entryCheck1, entryCheck2, iSimMaxReplace; //Looping variables
+	int splitBin, mergeBin, repInBin, iSimMaxReplace; //Looping variables. entryCheck1 and 2 should be declared here if checking
 
 	int simMaxHolder;
 
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN; //tauQuarter omitted
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer; //tauQuarter omitted
 	double fluxAtStep;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
@@ -334,9 +334,15 @@ int main(int argc, char *argv[]){
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
 	
-	
 	getParams(DEFile, WEFile);
-
+	
+	//Defining double for continuous dimer counting, gives more data points for comparing monomerization fraction
+	int dMax = paramsDe.nPart/2;
+	double dCounts[dMax + 2]; //Max dimers = nPart/2, min dimers = 0; so nPart/2 +1 possibilities for dimer frac, put in 1 more for storing number of recordings
+	for(iDimer = 0; iDimer < dMax +2; iDimer++){
+		dCounts[iDimer] = 0;
+	}
+	
 	tauMax = paramsWe.tauMax;
 	debugFile = fopen("Debug.txt","a");
 	fprintf(debugFile,"Tau loops + flux vector made \n");
@@ -532,7 +538,9 @@ int main(int argc, char *argv[]){
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
+			dCounts[Reps.sims[iBin]->mols->nl[1]] += Reps.weights[iSim];
 		}
+		dCounts[dMax+1]++;
 		debugFile = fopen("Debug.txt","a");
 		fprintf(debugFile,"Dynamics Finished  \n");
 		fclose(debugFile);
@@ -560,10 +568,14 @@ int main(int argc, char *argv[]){
 	debugFile = fopen("Debug.txt","a");
 	fprintf(debugFile,"Recording mCounts  \n");
 	fclose(debugFile);
+	
+	
+	
 	mCountsFile = fopen("mCounts.txt", "a");
-	for(iBin = 0; iBin <= Reps.iSimMax; iBin++){
-		fprintf(mCountsFile, "%i, %i, %E \n", Reps.sims[iBin]->mols->nl[0], Reps.sims[iBin]->mols->nl[1], Reps.weights[iBin]); //Change later to not have hard code
+	for(iDimer = 0; iDimer <= dMax; iDimer++){
+		fprintf(mCountsFile, "%i, %E \n", iDimer, dCounts[iDimer]); //Change later to not have hard code
 	}
+	fprintf(mCountsFile, "%i, %E", dCounts[dMax+1], (double)paramsDe.dt*paramsWe.tau);
 	fclose(mCountsFile);
 	
 	//Free Memory and finish
