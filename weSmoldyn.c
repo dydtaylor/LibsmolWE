@@ -171,7 +171,10 @@ double fluxes(){
 	if(nFlux>0){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
-				// Create new replica to replace the one recently lost
+				//Delete simulation. Adjust indexing to replace the simulation recently lost
+				//scan through all sims, find the last index that isn't in flux bin, then call that simA
+				//Replace with simA instead of iSimMax 
+				///free the sim too while you're at it
 				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[Reps.iSimMax];
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];

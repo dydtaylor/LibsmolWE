@@ -60,7 +60,7 @@ void initialDist(int nInit){
 		//Molecules + BCs
 		Reps.sims[jSim] = smolNewSim(2, lowBounds,highBounds);
 		smolSetRandomSeed(Reps.sims[jSim],genrand_int31());
-		smolSetGraphicsParams(Reps.sims[jSim], "opengl", 1, 0);
+		smolSetGraphicsParams(Reps.sims[jSim], "none", 1, 0);
 		smolSetSimTimes(Reps.sims[jSim],0,10000,paramsDe.dt);
 		
 		smolAddMolList(Reps.sims[jSim],"mList");
