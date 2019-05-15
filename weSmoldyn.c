@@ -176,7 +176,7 @@ double fluxes(){
 				//Move simA pointer to weights to iReps location 
 				//free the sim of deleted sim too
 				smolFreeSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
-				for(iSim = iSimMax; iSim >= 0; iSim--){
+				for(iSim = Reps.iSimMax; iSim >= 0; iSim--){
 					if(Reps.binLocs[iSim] != paramsWe.fluxBin){
 						simA = iSim;
 					}
@@ -203,7 +203,7 @@ double fluxes(){
 		if(DEBUGGING){
 			printf("BCM != 0 after flux step\n");
 		}
-		Reps.binContentsMax = 0;
+		Reps.binContentsMax[paramsWe.fluxBin] = 0;
 	}
 	
 		
