@@ -155,7 +155,7 @@ void splitMerge(int nWE){
 double fluxes(){
 	double fluxOut = 0;
 	double weightSum;
-	int jWeight, iReps, iSimMaxReplace, iSim;
+	int jWeight, iReps, simAReplace, iSim, simA;
 	int nFlux = Reps.binContentsMax[paramsWe.fluxBin]; // Number of replicas in the fluxBin
 
 	weightSum = 0;
@@ -167,30 +167,47 @@ double fluxes(){
 		printf("Weight not conserved \n");
 	}
 
-	// loop through replicas in flux bin and delete them
+	// loop through replicas in flux bin and delete them. Replace indices with empty non-flux indices
 	if(nFlux>0){
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
-				//Delete simulation. Adjust indexing to replace the simulation recently lost
-				//scan through all sims, find the last index that isn't in flux bin, then call that simA
-				//Replace with simA instead of iSimMax 
-				///free the sim too while you're at it
-				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[Reps.iSimMax];
-				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[Reps.iSimMax];
-				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[Reps.iSimMax];
-
-				for(iSimMaxReplace = 0; iSimMaxReplace < Reps.binContentsMax[Reps.binLocs[Reps.iSimMax]];iSimMaxReplace++){
-					if(Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax]] == Reps.iSimMax){
-						Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax]] = Reps.binContents[iReps][paramsWe.fluxBin];
+			
+				//Delete simulation. scan through all sims, find the last index that isn't in flux bin, then call that simA
+				//Move simA pointer to weights to iReps location 
+				//free the sim of deleted sim too
+				smolFreeSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
+				for(iSim = iSimMax; iSim >= 0; iSim--){
+					if(Reps.binLocs[iSim] != paramsWe.fluxBin){
+						simA = iSim;
 					}
 				}
+				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[simA];
+				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[simA];
+				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[simA];
 
-				Reps.weights[Reps.iSimMax] = NAN;
-				Reps.binLocs[Reps.iSimMax] = NAN;
-				Reps.iSimMax--;
-				Reps.binContentsMax[paramsWe.fluxBin]--;
+				for(simAReplace = 0; simAReplace < Reps.binContentsMax[Reps.binLocs[simA]];simAReplace++){
+					if(Reps.binContents[simAReplace][Reps.binLocs[simA]] == simA){
+						Reps.binContents[simAReplace][Reps.binLocs[simA]] = Reps.binContents[iReps][paramsWe.fluxBin];
+					}
+				}
+				Reps.weights[simA] = NAN;
+				Reps.binLocs[simA] = paramsWe.fluxBin;
 		}
 	}
+	for(iReps = 0; iReps < nFlux; iReps++){
+				Reps.iSimMax--;
+				Reps.binContentsMax[paramsWe.fluxBin]--;
+	}
+	
+	if( Reps.binContentsMax[paramsWe.fluxBin] != 0){
+		if(DEBUGGING){
+			printf("BCM != 0 after flux step\n");
+		}
+		Reps.binContentsMax = 0;
+	}
+	
+		
+	//
 
 	if(DEBUGGING && Reps.binContentsMax[paramsWe.fluxBin] != 0){
 			printf("Non Zero weight in flux bin \n");
@@ -345,6 +362,9 @@ int main(int argc, char *argv[]){
 	fprintf(debugFile, "Initial Distribution Made \n");
 	fclose(debugFile);
 	//Set other key initial values in replicas struct
+	for(int iBin = 0; iBin < Reps.nBins; iBin++){
+			Reps.binContentsMax[iBin] = 0;
+	}
 	for(iSim = 0; iSim < paramsWe.nInit; iSim++){
 		Reps.weights[iSim] = (double)1/paramsWe.nInit;
 		Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
