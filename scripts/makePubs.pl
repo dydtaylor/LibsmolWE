@@ -27,7 +27,7 @@ echo Time is `date`
 echo Directory is `pwd`
 # Run executable
 
-./weSmoldyn $run_name.Out $run_name.Flux $run_name.Err 0 $run_name.Time
+./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time >>$run_name.smolOut
 echo Finished at `date`
 EOF
     close FOOD;
