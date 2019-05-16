@@ -265,8 +265,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	insideRoi[0] = 0.0;
 	insideRoi[1] = 0.0;
 	
-	fluxCDF.Tinit = 100;
-	fluxCDF.nT = 100;
+	fluxCDF.nT = 300;
 	fluxCDF.fluxMax = 0.001;
 	for(jBin = 0; jBin < NFLUXBINS; jBin++){
 		fluxCDF.binCounts[jBin] = 0;
@@ -275,50 +274,91 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	printf("Parameters loaded\n");
 }
 
-void fluxAdd(double fluxIn){
-	int iBinpdf;
-	for(iBinpdf = 0; iBinpdf < NFLUXBINS; iBinpdf++){
-		if(fluxIn >= fluxCDF.binDefs[iBinpdf] && fluxIn <= fluxCDF.binDefs[iBinpdf+1]){
-			fluxCDF.binCounts[iBinpdf]++;
+void KSTest(char *flFile){
+	FILE *KSFile, *FluxFile;
+	char chrScan;
+	int iLine, iBin;
+	double binStep, cdf1, cdf2, ksStat;
+	int nLines = 0;
+	
+	//Clear previous binCounts
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		fluxCDF.binCounts[iBin] = 0;
+		fluxCDF.oldCounts[iBin] = 0;
+	}
+	
+	//open files for reading
+	FluxFile = fopen(flFile,"r");
+	
+	//count number of flux measurements
+	chrScan = getc(FluxFile);
+	while(chrScan != EOF){
+		if(chrScan == 'n'){
+			nLines++;
+		}
+		chrScan = getc(FluxFile);
+	}
+	//declare variable and load flux into it
+	double fluxVect[nLines];
+	fluxCDF.fluxMax = 0;
+	for(iLine = (nLines/3)-1; iLine < nLines; iLine++){
+		fscanf(FluxFile, "%E",fluxVect[iLine]);
+		if(fluxVect[iLine]>fluxCDF.fluxMax){
+			fluxCDF.fluxMax = fluxVect[iLine];
 		}
 	}
-}
-
-void fluxBin(){
-	int iBin;
-	double binStep;
-	fluxCDF.binDefs[0] = 0;
+	fclose(FluxFile);
+	
+	
+	//Create new Bin Defs
 	binStep = fluxCDF.fluxMax / NFLUXBINS;
-	for(iBin = 1; iBin < NFLUXBINS + 1; iBin++){
+	fluxCDF.binDefs[0] = 0;
+	for(iBin = 1; iBin <= NFLUXBINS; iBin++){
 		fluxCDF.binDefs[iBin] = (double)iBin*binStep;
 	}
-}
-
-void appendBins(){
-	int iBin;
-	for(iBin = 0; iBin < NFLUXBINS; iBin++){
-		fluxCDF.oldCounts[iBin] += fluxCDF.binCounts[iBin];
-		fluxCDF.binCounts[iBin] = 0;
+	
+	//Update Bin Counts
+	for(iLine = (nLines/3) - 1; iLine < (2*nLines/3); iLine++){
+		for(iBin=0;iBin<NFLUXBINS;iBin++){
+			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
+				fluxCDF.oldCounts[iBin]++;
+			}
+		}
 	}
-}
-
-void KSTest(){
-	double cdf1, cdf2, ksStat;
-	int iBin;
+	
+	for(iLine = (2*nLines/3); iLine < nLines; iLine++){
+		for(iBin=0;iBin<NFLUXBINS;iBin++){
+			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
+				fluxCDF.binCounts[iBin]++;
+			}
+		}
+	}
+	
+	//Perform KS Test
 	cdf1 = 0;
 	cdf2 = 0;
 	ksStat = 0;
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
-		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT/2);
-		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT/2);
-		if (fabs(cdf1-cdf2)>ksStat){
+		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT/3);
+		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT/3);
+		if(fabs(cdf1-cdf2)>ksStat){
 			ksStat = fabs(cdf1-cdf2);
-			fluxCDF.KSstat = ksStat;
 		}
 	}
 	
-	appendBins();
+	KSFile = fopen("ksOut.txt", "a");
+	fprintf(KSFile, "maxFlux = %E \n", fluxCDF.fluxMax);
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		fprintf(KSFile, "%i ", fluxCDF.binCounts[iBin]);
+	}
+	fprintf(KSFile, "\n");
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		fprintf(KSFile, "%i ", fluxCDF.oldCounts[iBin]);
+	}
+	fprintf(KSFile, "\n ksStat: %E \n nT %i \n",ksStat, fluxCDF.nT);
+	fluxCDF.nT *= 2;
 }
+
 
 int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
@@ -330,6 +370,8 @@ int main(int argc, char *argv[]){
 
 	//Load simulation / WE parameters from outside files
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile;
+	char *fluxFileStr;
+	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
@@ -379,7 +421,6 @@ int main(int argc, char *argv[]){
 	}
 	nanCheck = 0;
 	firstNAN = 0;
-	fluxBin();
 
 	printf("Initial Distribution Made \n");
 	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
@@ -396,27 +437,15 @@ int main(int argc, char *argv[]){
 		
 		//Flux Recording
 		if(paramsWe.fluxBin >= 0){
-		FLFile = fopen(argv[2],"a");
+		FLFile = fopen(fluxFileStr,"a");
 		fluxAtStep = fluxes();
 		fprintf(FLFile, "%E \n", fluxAtStep);
-		fluxAdd(fluxAtStep);
 		fclose(FLFile);
 			if(DEBUGGING){
 				debugFile = fopen("Debug.txt","a");
 				fprintf(debugFile,"Flux Recorded \n");
 				fclose(debugFile);
 			}
-		}
-		//KS Bin Definitions
-		if(fluxAtStep > fluxCDF.fluxMax && nWE < fluxCDF.Tinit){
-			fluxCDF.fluxMax = fluxAtStep;
-			fluxBin();
-			ksFile = fopen("ksOut.txt", "a");
-			for(iBin = 0; iBin < NFLUXBINS+1; iBin++){
-				fprintf(ksFile, "%E ", fluxCDF.binDefs[iBin]);
-			}
-			fprintf(ksFile,"\n");
-			fclose(ksFile);
 		}
 		
 		//Single Step Time Measurement
@@ -426,25 +455,8 @@ int main(int argc, char *argv[]){
 		
 		//KS Recording
 		if(nWE == fluxCDF.nT){
-			ksFile = fopen("ksOut.txt","a");
-			for(iBin = 0; iBin < NFLUXBINS; iBin++){
-				fprintf(ksFile, "%i ", fluxCDF.binCounts[iBin]);
+			KSTest(fluxFileStr);
 			}
-			fprintf(ksFile,"\n");
-			for(iBin = 0; iBin < NFLUXBINS; iBin++){
-				fprintf(ksFile, "%i ", fluxCDF.oldCounts[iBin]);
-			}
-			fprintf(ksFile, "\n");
-			KSTest();
-			fprintf(ksFile, "ksStat: %E \n nT: %i \n", fluxCDF.KSstat, fluxCDF.nT);
-			fclose(ksFile);
-			fluxCDF.nT *= 2;
-			if(DEBUGGING){
-				debugFile = fopen("Debug.txt","a");
-				fprintf(debugFile,"KS Recorded \n");
-				fclose(debugFile);
-			}
-		}
 		
 		//Storing replicas struct without any stray NANs
 		if(nanCheck == 0){
@@ -575,7 +587,7 @@ int main(int argc, char *argv[]){
 	for(iDimer = 0; iDimer <= dMax; iDimer++){
 		fprintf(mCountsFile, "%i, %E \n", iDimer, dCounts[iDimer]); //Change later to not have hard code
 	}
-	fprintf(mCountsFile, "%i, %E", dCounts[dMax+1], (double)paramsDe.dt*paramsWe.tau);
+	fprintf(mCountsFile, "%E, %E", dCounts[dMax+1], (double)paramsDe.dt*paramsWe.tau);
 	fclose(mCountsFile);
 	
 	//Free Memory and finish

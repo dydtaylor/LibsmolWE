@@ -67,10 +67,7 @@ struct fluxCounts{
 	double binDefs[NFLUXBINS+1];
 	int binCounts[NFLUXBINS];
 	int oldCounts[NFLUXBINS];
-	int Tinit;
 	int nT;
-	double KSstat;
-	
 };
 
 struct paramsWeightedEnsemble paramsWe;
