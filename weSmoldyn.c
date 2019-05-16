@@ -550,21 +550,21 @@ int main(int argc, char *argv[]){
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
-			dCounts[Reps.sims[iBin]->mols->nl[1]] += Reps.weights[iSim];
+			dCounts[Reps.sims[iSim]->mols->nl[1]] += Reps.weights[iSim];
 		}
 		dCounts[dMax+1]++;
 		
-		//Weight distribution recorded
+		//Record weight distribution among bins
 		SIMFile = fopen(argv[1]);
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
 			for(iBinContents < Reps.binContentsMax[iBin]){
 				binWeight += Reps.weights[Reps.binContents[iBinContents][iBin]];
 			}
-			fprintf(SIMFile,"%E \n",binWeight);
+			fprintf(SIMFile,"%i, %E \n",iBin, binWeight);
 		}
 		fprintf(SIMFile, "****\n");
-		fclose("SIMFile);
+		fclose(SIMFile);
 		
 		
 		debugFile = fopen("Debug.txt","a");
