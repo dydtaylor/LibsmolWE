@@ -365,7 +365,7 @@ int main(int argc, char *argv[]){
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer; //tauQuarter omitted
-	double fluxAtStep;
+	double fluxAtStep, binWeight;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
@@ -553,6 +553,20 @@ int main(int argc, char *argv[]){
 			dCounts[Reps.sims[iBin]->mols->nl[1]] += Reps.weights[iSim];
 		}
 		dCounts[dMax+1]++;
+		
+		//Weight distribution recorded
+		SIMFile = fopen(argv[1]);
+		for(iBin = 0; iBin < Reps.nBins; iBin++){
+			binWeight = 0;
+			for(iBinContents < Reps.binContentsMax[iBin]){
+				binWeight += Reps.weights[Reps.binContents[iBinContents][iBin]];
+			}
+			fprintf(SIMFile,"%E \n",binWeight);
+		}
+		fprintf(SIMFile, "****\n");
+		fclose("SIMFile);
+		
+		
 		debugFile = fopen("Debug.txt","a");
 		fprintf(debugFile,"Dynamics Finished  \n");
 		fclose(debugFile);
