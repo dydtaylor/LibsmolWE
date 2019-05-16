@@ -15,16 +15,16 @@ void splitMerge(int nWE){
 	int splitBin, mergeBin, repInBin, iSimMaxReplace; //Looping variables. entryCheck1 and 2 should be declared here if checking
 
 	int simMaxHolder;
+	FILE *debugFile;
 
 	double p0; /*Doubles giving the merge probabilities*/
-	double randPull; /*Double storing a pull from RAND*/
 	//unsigned int binConPrev[BINCONTENTSMAXMAX][NBINSMAX];
 
 	/*Merging loop*/
 	for(mergeBin = binMin; mergeBin <binMax; mergeBin++){
 		/*Initialize the merge indices with the first 2 indices stored in appropriate BinContents row*/
 
-		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin) && Reps.binContentsMax[mergeBin] > 0){ // JUN COMMENT: What is the second condition for?
+		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin)){ // JUN COMMENT: What is the second condition for?
 			mergeInd[0] = Reps.binContents[0][mergeBin];
 			mergeInd[1] = Reps.binContents[1][mergeBin];
 			rowCol[0] = 0;
@@ -33,51 +33,70 @@ void splitMerge(int nWE){
 			for(repInBin = 0; repInBin < Reps.binContentsMax[mergeBin];repInBin++){ //NUM_Rows needs to change to an appropriate BCM statement
 
 				dummyInd = Reps.binContents[repInBin][mergeBin];
-				/*If the weight of this index is greater than the weight in the first merge index,
-				but smaller than the weight in the second index, then replace the first merge index with the new index
-
-				Otherwise, if the weight of the dummy index is greater than the weight in the 2nd index, then replace the second
-				index with the new index
+				/*Check the weight associated with dummy Ind with the weight associated with the two merge indices and replace the smaller of the two with this index (assuming this index != mergeInd[0] or mergeInd[1]
 				*/
-				if((Reps.weights[dummyInd] < Reps.weights[mergeInd[0]])&&(Reps.weights[dummyInd] > Reps.weights[mergeInd[1]])){
-					mergeInd[0] = dummyInd;
-					rowCol[0] = repInBin;
+				if(dummyInd != mergeInd[0] && dummyInd != mergeInd[1]){
+					if(Reps.weights[mergeInd[0]]>Reps.weights[mergeInd[1]]){
+						if(Reps.weights[dummyInd] < Reps.weights[mergeInd[1]]){
+							mergeInd[0] = dummyInd;
+							rowCol[0] = repInBin;
+					}
+						else if(Reps.weights[dummyInd] < Reps.weights[mergeInd[0]]){
+							mergeInd[0] = dummyInd;
+							rowCol[0] = repInBin;
+					}
+				}
+					if(Reps.weights[mergeInd[0]] <= Reps.weights[mergeInd[1]]){
+						if(Reps.weights[dummyInd] < Reps.weights[mergeInd[0]]){
+							mergeInd[1] = dummyInd;
+							rowCol[1] = repInBin;
 
 				}
-				else if((Reps.weights[dummyInd] < Reps.weights[mergeInd[1]])&& mergeInd[0] != dummyInd){
-					mergeInd[1] = dummyInd;
-					rowCol[1] = repInBin;
+						else if(Reps.weights[dummyInd] < Reps.weights[mergeInd[1]]){
+							mergeInd[1] = dummyInd;
+							rowCol[1] = repInBin;
 				}
+			}
+			}
 			}
 
 			if(mergeInd[0] == mergeInd[1] && DEBUGGING){
 					printf("Merge Error \n");
 			}
 
-			/*Decide which index to keep*/
-			p0 = Reps.weights[mergeInd[0]] / (Reps.weights[mergeInd[0]]+Reps.weights[mergeInd[1]]);
-			randPull = RAND;
-			if(randPull<p0){ // JUN COMMENT: Do you need a variable randPull? Just use RAND, and, below, use else instead of else-if.
+			/*Decide which index to keep.*/
+			if(Reps.weights[mergeInd[0]]==0 && Reps.weights[mergeInd[1]]==0){
+				p0 = 0.5;
+			}
+			else{
+				p0 = Reps.weights[mergeInd[0]] / (Reps.weights[mergeInd[0]]+Reps.weights[mergeInd[1]]);
+			}
+		
+			if(RAND<p0){
 				keptInd[0] = mergeInd[0];
 				keptInd[1] = mergeInd[1];
 				rowCol[2] = rowCol[1];
 			}
-			else if(randPull > p0){
+			else{
 				keptInd[0] = mergeInd[1];
 				keptInd[1] = mergeInd[0];
 				rowCol[2] = rowCol[0];
 			}
 
 			/*Update weight of the kept index*/
-			if(DEBUGGING &&( (isnan(Reps.weights[keptInd[0]])) || (isnan(Reps.weights[keptInd[1]])))){
-				printf("WARNING: Moving NAN Weight \n");
+			if( (isnan(Reps.weights[keptInd[0]])) || (isnan(Reps.weights[keptInd[1]]))){
+				debugFile=fopen("Debug.txt","a");
+				fprintf(debugFile,"WARNING: Moving NAN Weight. \n keptInd[0] = %i keptWeight[0] = %E \n keptInd[1] = %i keptWeight[1] = %E \n", keptInd[0], Reps.weights[keptInd[0]],keptInd[1], Reps.weights[keptInd[1]]);
+				fclose(debugFile);
 			}
-			Reps.weights[keptInd[0]] = Reps.weights[keptInd[0]] + Reps.weights[keptInd[1]];
+			Reps.weights[keptInd[0]] += Reps.weights[keptInd[1]];
 
 			/*Replace the old simulation with the final non-NAN simulation*/
 
-			if(DEBUGGING && isnan(Reps.weights[Reps.iSimMax])){
-				printf("WARNING: Moving NAN Weight \n");
+			if(DEBUGGING && isnan(Reps.weights[Reps.iSimMax-1])){
+				debugFile=fopen("Debug.txt","a");
+				fprintf(debugFile,"WARNING: Moving NAN Weight. \n iSimMax = %i weight %E \n", Reps.iSimMax, Reps.weights[Reps.iSimMax-1]);
+				fclose(debugFile);
 			}
 
 			/*Find iSimMax in binContents and replace it with keptInd[1]*/
@@ -90,26 +109,26 @@ void splitMerge(int nWE){
 			This has problems when the deleted sim is ISM. When that happens, I will take the last element of the table of contents and
 			move it to where ISM is in the table.*/
 
-			for(iSimMaxReplace = 0; iSimMaxReplace < Reps.binContentsMax[Reps.binLocs[Reps.iSimMax]];iSimMaxReplace++){
-				if(Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax]] == Reps.iSimMax){
-					Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax]] = keptInd[1];
+			for(iSimMaxReplace = 0; iSimMaxReplace < Reps.binContentsMax[Reps.binLocs[Reps.iSimMax-1]];iSimMaxReplace++){
+				if(Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax-1]] == Reps.iSimMax-1){
+					Reps.binContents[iSimMaxReplace][Reps.binLocs[Reps.iSimMax-1]] = keptInd[1];
 					simMaxHolder = iSimMaxReplace;
-					iSimMaxReplace = Reps.binContentsMax[Reps.binLocs[Reps.iSimMax]];
+					iSimMaxReplace = Reps.binContentsMax[Reps.binLocs[Reps.iSimMax-1]];
 				}
 			}
-
-			if (Reps.iSimMax ==keptInd[1]){
-				Reps.binContents[simMaxHolder][Reps.binLocs[Reps.iSimMax]] = Reps.binContentsMax[Reps.binLocs[Reps.iSimMax]] - 1;
-			}
+			/*Pretty sure this does the same thing as line 135
+			if (Reps.iSimMax-1 ==keptInd[1]){
+				Reps.binContents[simMaxHolder][Reps.binLocs[Reps.iSimMax-1]] = Reps.binContents[Reps.binContentsMax[Reps.binLocs[Reps.iSimMax-1]]-1][Reps.binLocs[Reps.iSimMax-1]] //iSimMax gives max numerical, index is 1 less, same for BC Max;
+			}*/
 			smolFreeSim(Reps.sims[keptInd[1]]);
-			Reps.sims[keptInd[1]] = Reps.sims[Reps.iSimMax];
-			Reps.weights[keptInd[1]] = Reps.weights[Reps.iSimMax];
-			Reps.binLocs[keptInd[1]] = Reps.binLocs[Reps.iSimMax];
+			Reps.sims[keptInd[1]] = Reps.sims[Reps.iSimMax-1];
+			Reps.weights[keptInd[1]] = Reps.weights[Reps.iSimMax-1];
+			Reps.binLocs[keptInd[1]] = Reps.binLocs[Reps.iSimMax-1];
 
 			//Setting things to NAN is technically unnecessary. Freeing sim should save memory.
-			Reps.sims[Reps.iSimMax] = NULL;
-			Reps.weights[Reps.iSimMax] = NAN;
-			Reps.binLocs[Reps.iSimMax] = NAN;
+			Reps.sims[Reps.iSimMax-1] = NULL;
+			Reps.weights[Reps.iSimMax-1] = NAN;
+			Reps.binLocs[Reps.iSimMax-1] = NAN;
 			Reps.iSimMax--;
 
 			/*Reorganize the binContents matrix*/
@@ -139,8 +158,8 @@ void splitMerge(int nWE){
 			}
 			copySim1(splitInd,Reps.iSimMax+1);
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
-			Reps.weights[Reps.iSimMax+1] = Reps.weights[splitInd];
-			Reps.binLocs[Reps.iSimMax+1] = Reps.binLocs[splitInd];
+			Reps.weights[Reps.iSimMax] = Reps.weights[splitInd];
+			Reps.binLocs[Reps.iSimMax] = Reps.binLocs[splitInd];
 			Reps.iSimMax++;
 			if(DEBUGGING && Reps.iSimMax > ISIMMAXMAX){
 				printf("ERROR: iSimMax out of bounds");
@@ -205,13 +224,6 @@ double fluxes(){
 		}
 		Reps.binContentsMax[paramsWe.fluxBin] = 0;
 	}
-	
-		
-	//
-
-	if(DEBUGGING && Reps.binContentsMax[paramsWe.fluxBin] != 0){
-			printf("Non Zero weight in flux bin \n");
-	};
 
 	// Re-weight the remaining replicas
 	if(fluxOut != 0){
@@ -243,7 +255,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.nPart);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.reactBit);
 	//paramsWe.fluxBin = 0;
-	Reps.iSimMax = paramsWe.nInit -1;
+	Reps.iSimMax = paramsWe.nInit;
 	fclose(DEFile);
 	fclose(WEFile);
 	Reps.nBins = paramsWe.nBins;
@@ -364,7 +376,7 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer; //tauQuarter omitted
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents; //tauQuarter omitted
 	double fluxAtStep, binWeight;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
@@ -491,11 +503,13 @@ int main(int argc, char *argv[]){
 		
 		
 		//Checking for first appearance of stray NANs
-		/*for(iSim = 0; (iSim < Reps.iSimMax || nanCheck == 0); iSim++){
+		if(nanCheck == 0){
+		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 			if(Reps.weights[iSim] != Reps.weights[iSim]){
 				nanCheck = 1;
 			}
-		}*/
+		}
+		}
 		
 		if(DEBUGGING){
 				debugFile = fopen("Debug.txt","a");
@@ -504,7 +518,6 @@ int main(int argc, char *argv[]){
 			}
 		
 		//Recording stray NANs (only the first time they appear)
-		/*if(nWE == 0){
 		if((nanCheck == 1 && firstNAN == 0)){
 			structNANFile = fopen("nanStructs.txt","w");
 			for(iSim = 0; iSim < Reps.iSimMax; iSim++){
@@ -519,7 +532,7 @@ int main(int argc, char *argv[]){
 			fclose(structNANFile);
 			firstNAN = 1;
 		}
-		}*/
+		
 		
 		if(nWE ==10){
 			stop[1] = clock();
@@ -555,10 +568,10 @@ int main(int argc, char *argv[]){
 		dCounts[dMax+1]++;
 		
 		//Record weight distribution among bins
-		SIMFile = fopen(argv[1]);
+		SIMFile = fopen(argv[1],"a");
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
-			for(iBinContents < Reps.binContentsMax[iBin]){
+			for(iBinContents=0;iBinContents < Reps.binContentsMax[iBin];iBinContents++){
 				binWeight += Reps.weights[Reps.binContents[iBinContents][iBin]];
 			}
 			fprintf(SIMFile,"%i, %E \n",iBin, binWeight);
@@ -585,7 +598,7 @@ int main(int argc, char *argv[]){
 	fprintf(debugFile,"Recording final sims  \n");
 	fclose(debugFile);
 	SIMFile = fopen(argv[1], "w");
-	for(iBin = 0;iBin <= Reps.iSimMax; iBin++){
+	for(iBin = 0;iBin < Reps.iSimMax; iBin++){
 		fprintf(SIMFile, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
 	}
 	fclose(SIMFile);
