@@ -19,7 +19,6 @@ void splitMerge(int nWE){
 
 	double p0; /*Doubles giving the merge probabilities*/
 	//unsigned int binConPrev[BINCONTENTSMAXMAX][NBINSMAX];
-
 	/*Merging loop*/
 	for(mergeBin = binMin; mergeBin <binMax; mergeBin++){
 		/*Initialize the merge indices with the first 2 indices stored in appropriate BinContents row*/
@@ -35,29 +34,18 @@ void splitMerge(int nWE){
 				dummyInd = Reps.binContents[repInBin][mergeBin];
 				/*Check the weight associated with dummy Ind with the weight associated with the two merge indices and replace the smaller of the two with this index (assuming this index != mergeInd[0] or mergeInd[1]
 				*/
-				if(dummyInd != mergeInd[0] && dummyInd != mergeInd[1]){
-					if(Reps.weights[mergeInd[0]]>Reps.weights[mergeInd[1]]){
-						if(Reps.weights[dummyInd] < Reps.weights[mergeInd[1]]){
-							mergeInd[0] = dummyInd;
-							rowCol[0] = repInBin;
-					}
-						else if(Reps.weights[dummyInd] < Reps.weights[mergeInd[0]]){
-							mergeInd[0] = dummyInd;
-							rowCol[0] = repInBin;
+				if(Reps.weights[mergeInd[0]] <= Reps.weights[mergeInd[1]]){
+					if(Reps.weights[dummyInd]<Reps.weights[mergeInd[1]] && dummyInd != mergeInd[0]){
+						mergeInd[1] = dummyInd;
+						rowCol[1] = repInBin;
 					}
 				}
-					if(Reps.weights[mergeInd[0]] <= Reps.weights[mergeInd[1]]){
-						if(Reps.weights[dummyInd] < Reps.weights[mergeInd[0]]){
-							mergeInd[1] = dummyInd;
-							rowCol[1] = repInBin;
-
+				else if(Reps.weights[mergeInd[0]]> Reps.weights[mergeInd[1]]){
+					if(Reps.weights[dummyInd]<Reps.weights[mergeInd[0]] && dummyInd != mergeInd[1]){
+						mergeInd[0] = dummyInd;
+						rowCol[0] = repInBin;
+					}
 				}
-						else if(Reps.weights[dummyInd] < Reps.weights[mergeInd[1]]){
-							mergeInd[1] = dummyInd;
-							rowCol[1] = repInBin;
-				}
-			}
-			}
 			}
 
 			if(mergeInd[0] == mergeInd[1] && DEBUGGING){
@@ -135,7 +123,7 @@ void splitMerge(int nWE){
 			Reps.binContents[rowCol[2]][mergeBin] = Reps.binContents[Reps.binContentsMax[mergeBin] -1][mergeBin];
 			Reps.binContents[-1+Reps.binContentsMax[mergeBin]][mergeBin] = NAN;
 			Reps.binContentsMax[mergeBin]--;
-
+			
 			/*for(entryCheck1 = 0; entryCheck1 < Reps.binContentsMax[mergeBin]-1;entryCheck1++){
 				for(entryCheck2 = entryCheck1 + 1; entryCheck2< Reps.binContentsMax[mergeBin]; entryCheck2++){
 					if(DEBUGGING && Reps.binContents[entryCheck1][mergeBin]==Reps.binContents[entryCheck2][mergeBin]){
@@ -145,7 +133,6 @@ void splitMerge(int nWE){
 			} // finished entryCheck1 loop through this bin's contents */
 		} // finished while-loop to check this bin
 	} // finished merging loop through bins
-
 	/*Splitting Loop*/
 	for(splitBin = binMin; splitBin < binMax; splitBin++){
 		while((Reps.binContentsMax[splitBin]<paramsWe.repsPerBin)&&(Reps.binContentsMax[splitBin]>0)){
@@ -156,16 +143,19 @@ void splitMerge(int nWE){
 					splitInd = dummyInd;
 				}
 			}
-			copySim1(splitInd,Reps.iSimMax+1);
+			copySim1(splitInd,Reps.iSimMax);
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax] = Reps.weights[splitInd];
 			Reps.binLocs[Reps.iSimMax] = Reps.binLocs[splitInd];
+			if(isnan(Reps.weights[Reps.iSimMax])){
+				printf("statement");
+			}
+			Reps.binContents[-1+Reps.binContentsMax[splitBin]][splitBin] = Reps.iSimMax;
+			Reps.binContentsMax[splitBin]++;
 			Reps.iSimMax++;
 			if(DEBUGGING && Reps.iSimMax > ISIMMAXMAX){
 				printf("ERROR: iSimMax out of bounds");
 			}
-			Reps.binContents[-1+Reps.binContentsMax[splitBin]][splitBin] = Reps.iSimMax;
-			Reps.binContentsMax[splitBin]++;
 		}
 	} // finished splitting loop
 	return;
