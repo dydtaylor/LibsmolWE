@@ -563,7 +563,8 @@ int main(int argc, char *argv[]){
 			}
 			fprintf(SIMFile,"%i, %E \n",iBin, binWeight);
 		}
-		fprintf(SIMFile, "****\n");
+		fprintf(SIMFile, "****\n"); //Consider changing this. Can also consider making new file for each tau step
+		//overall sizes should stay reasonable either way
 		fclose(SIMFile);
 		
 		
