@@ -268,7 +268,6 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	insideRoi[1] = 0.0;
 	
 	fluxCDF.nT = 300;
-	fluxCDF.fluxMax = 0.001;
 	for(jBin = 0; jBin < NFLUXBINS; jBin++){
 		fluxCDF.binCounts[jBin] = 0;
 	}
@@ -456,7 +455,7 @@ int main(int argc, char *argv[]){
 		}
 		
 		//KS Recording
-		if(nWE == fluxCDF.nT){
+		if(nWE == fluxCDF.nT&&paramsWe.fluxBin >= 0){
 			KSTest(fluxFileStr);
 			}
 		
