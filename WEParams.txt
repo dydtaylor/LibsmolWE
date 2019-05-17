@@ -1,4 +1,4 @@
-tau		100
+tau		10
 repsPerBin 	50
 initialReps	50
 tauMax		10000

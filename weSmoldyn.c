@@ -168,7 +168,7 @@ double fluxes(){
 	int nFlux = Reps.binContentsMax[paramsWe.fluxBin]; // Number of replicas in the fluxBin
 
 	weightSum = 0;
-	for(jWeight = 0; jWeight <= Reps.iSimMax; jWeight++){
+	for(jWeight = 0; jWeight < Reps.iSimMax; jWeight++){
 		weightSum = weightSum + Reps.weights[jWeight];
 	}
 
@@ -185,7 +185,7 @@ double fluxes(){
 				//Move simA pointer to weights to iReps location 
 				//free the sim of deleted sim too
 				smolFreeSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
-				for(iSim = Reps.iSimMax; iSim >= 0; iSim--){
+				for(iSim = Reps.iSimMax-1; iSim >= 0; iSim--){
 					if(Reps.binLocs[iSim] != paramsWe.fluxBin){
 						simA = iSim;
 					}
@@ -370,7 +370,7 @@ int main(int argc, char *argv[]){
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *ksFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile;
 	char *fluxFileStr;
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
@@ -587,7 +587,7 @@ int main(int argc, char *argv[]){
 	debugFile = fopen("Debug.txt","a");
 	fprintf(debugFile,"Recording final sims  \n");
 	fclose(debugFile);
-	SIMFile = fopen(argv[1], "w");
+	SIMFile = fopen(argv[1], "a");
 	for(iBin = 0;iBin < Reps.iSimMax; iBin++){
 		fprintf(SIMFile, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
 	}

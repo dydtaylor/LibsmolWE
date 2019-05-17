@@ -36,7 +36,7 @@ struct paramsWeightedEnsemble{
 	unsigned int nBins;
 	int fluxBin;
 	unsigned int nInit;
-	double binDefs[NBINSMAX];
+	//double binDefs[NBINSMAX];
 } ;
 
 struct paramsDynamicsEngine{
