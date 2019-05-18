@@ -1,6 +1,6 @@
-tau		10
+tau		100
 repsPerBin 	50
 initialReps	50
 tauMax		10000
 nBins		25
-fluxBin		-1
+fluxBin		0

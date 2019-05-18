@@ -6,4 +6,4 @@ difD	0.5
 bindR	1.0
 unbindK	100000
 nPart	10
-reactBit 1
+reactBit 0

@@ -47,10 +47,10 @@ void splitMerge(int nWE){
 					}
 				}
 			}
-
+			/*
 			if(mergeInd[0] == mergeInd[1] && DEBUGGING){
 					printf("Merge Error \n");
-			}
+			}*/
 
 			/*Decide which index to keep.*/
 			if(Reps.weights[mergeInd[0]]==0 && Reps.weights[mergeInd[1]]==0){
@@ -123,7 +123,6 @@ void splitMerge(int nWE){
 			Reps.binContents[rowCol[2]][mergeBin] = Reps.binContents[Reps.binContentsMax[mergeBin] -1][mergeBin];
 			Reps.binContents[-1+Reps.binContentsMax[mergeBin]][mergeBin] = NAN;
 			Reps.binContentsMax[mergeBin]--;
-			
 			/*for(entryCheck1 = 0; entryCheck1 < Reps.binContentsMax[mergeBin]-1;entryCheck1++){
 				for(entryCheck2 = entryCheck1 + 1; entryCheck2< Reps.binContentsMax[mergeBin]; entryCheck2++){
 					if(DEBUGGING && Reps.binContents[entryCheck1][mergeBin]==Reps.binContents[entryCheck2][mergeBin]){
@@ -147,9 +146,6 @@ void splitMerge(int nWE){
 			Reps.weights[splitInd] = Reps.weights[splitInd] / 2;
 			Reps.weights[Reps.iSimMax] = Reps.weights[splitInd];
 			Reps.binLocs[Reps.iSimMax] = Reps.binLocs[splitInd];
-			if(isnan(Reps.weights[Reps.iSimMax])){
-				printf("statement");
-			}
 			Reps.binContents[-1+Reps.binContentsMax[splitBin]][splitBin] = Reps.iSimMax;
 			Reps.binContentsMax[splitBin]++;
 			Reps.iSimMax++;
@@ -185,14 +181,15 @@ double fluxes(){
 				//Move simA pointer to weights to iReps location 
 				//free the sim of deleted sim too
 				smolFreeSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
-				for(iSim = Reps.iSimMax-1; iSim >= 0; iSim--){
+				for(iSim = Reps.iSimMax -1; iSim>=0 ; iSim--){
 					if(Reps.binLocs[iSim] != paramsWe.fluxBin){
 						simA = iSim;
+						iSim = -1;
 					}
 				}
 				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[simA];
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[simA];
-				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.binLocs[simA];
+				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = findBin(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
 
 				for(simAReplace = 0; simAReplace < Reps.binContentsMax[Reps.binLocs[simA]];simAReplace++){
 					if(Reps.binContents[simAReplace][Reps.binLocs[simA]] == simA){
@@ -201,6 +198,8 @@ double fluxes(){
 				}
 				Reps.weights[simA] = NAN;
 				Reps.binLocs[simA] = paramsWe.fluxBin;
+				Reps.sims[simA] = NULL;
+
 		}
 	}
 	for(iReps = 0; iReps < nFlux; iReps++){
@@ -358,6 +357,7 @@ void KSTest(char *flFile){
 	}
 	fprintf(KSFile, "\n ksStat: %E \n nT %i \n",ksStat, fluxCDF.nT);
 	fluxCDF.nT *= 2;
+	return;
 }
 
 
@@ -490,7 +490,6 @@ int main(int argc, char *argv[]){
 			}
 		}
 		
-		
 		//Checking for first appearance of stray NANs
 		if(nanCheck == 0){
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
@@ -533,6 +532,7 @@ int main(int argc, char *argv[]){
 			fclose(debugFile);
 		}
 		
+		//Dynamics and rebuilding BCM
 		for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
@@ -546,6 +546,7 @@ int main(int argc, char *argv[]){
 				start[2] = clock();
 			}
 			dynamicsEngine(Reps.sims[iSim]);
+			
 			if(nWE == 10){
 				stop[2] = clock();
 			}

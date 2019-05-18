@@ -14,7 +14,7 @@
 #define RANDINT genrand_int32()
 #define PI 3.14159265
 
-#define NBINSMAX 220
+#define NBINSMAX 300
 #define BINCONTENTSMAXMAX 50000
 #define ISIMMAXMAX 50000
 #define NULLDEVICE "/dev/null"
@@ -24,7 +24,7 @@
 #define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 1
-#define STOPCOMMAND 0
+#define STOPCOMMAND 1
 #define WEENABLE 1
 #define ROBINS 1
 

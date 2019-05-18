@@ -65,6 +65,7 @@ void initialDist(int nInit){
 
 
 void dynamicsEngine(simptr currentSim){
+	smolUpdateSim(currentSim);
 	smolRunSimUntil(currentSim, currentSim->time + paramsWe.tau*paramsDe.dt);
 }
 
@@ -131,6 +132,7 @@ void copySim1(int simIn, int simOut){
 	outputStates[0] = MSsoln;
 	outputStates[1] = MSsoln;
 	
+	smolFreeSim(Reps.sims[simOut]);
 	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
 	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
 	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);
@@ -173,6 +175,7 @@ void copySim1(int simIn, int simOut){
 	}
 	}
 	smolUpdateSim(Reps.sims[simOut]);
+	smolUpdateSim(Reps.sims[simIn]);
 	//Print statement to check functionality. Note molecule indices get changed but everything else preserved
 	/*
 	for(nList = 0; nList < Reps.sims[simIn]->mols->nlist; nList++){
