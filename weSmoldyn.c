@@ -47,6 +47,7 @@ void splitMerge(int nWE){
 					}
 				}
 			}
+			
 			/*
 			if(mergeInd[0] == mergeInd[1] && DEBUGGING){
 					printf("Merge Error \n");
@@ -161,8 +162,15 @@ double fluxes(){
 	double fluxOut = 0;
 	double weightSum;
 	int jWeight, iReps, simAReplace, iSim, simA;
+	FILE *debugFile;
 	int nFlux = Reps.binContentsMax[paramsWe.fluxBin]; // Number of replicas in the fluxBin
-
+	
+				if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"%i sims in flux bin \n", nFlux);
+				fclose(debugFile);
+			}
+	
 	weightSum = 0;
 	for(jWeight = 0; jWeight < Reps.iSimMax; jWeight++){
 		weightSum = weightSum + Reps.weights[jWeight];
@@ -274,42 +282,29 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	printf("Parameters loaded\n");
 }
 
-void KSTest(char *flFile){
-	FILE *KSFile, *FluxFile;
-	char chrScan;
+void KSTest(FILE *FluxFile, int nWE){
+	FILE *KSFile, *debugKS;
 	int iLine, iBin;
 	double binStep, cdf1, cdf2, ksStat;
-	int nLines = 0;
+	int nLines = nWE;
+	double fluxVect[nWE];
 	
 	//Clear previous binCounts
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		fluxCDF.binCounts[iBin] = 0;
 		fluxCDF.oldCounts[iBin] = 0;
 	}
-	
-	//open files for reading
-	FluxFile = fopen(flFile,"r");
-	
-	//count number of flux measurements
-	chrScan = getc(FluxFile);
-	while(chrScan != EOF){
-		if(chrScan == 'n'){
-			nLines++;
-		}
-		chrScan = getc(FluxFile);
-	}
-	//declare variable and load flux into it
-	double fluxVect[nLines];
+
+	//load flux
 	fluxCDF.fluxMax = 0;
-	for(iLine = (nLines/3)-1; iLine < nLines; iLine++){
-		fscanf(FluxFile, "%E",fluxVect[iLine]);
-		if(fluxVect[iLine]>fluxCDF.fluxMax){
+	for(iLine = 0; iLine < nLines; iLine++){
+		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
+		if(iLine> nLines/3 && fluxVect[iLine]>fluxCDF.fluxMax){
 			fluxCDF.fluxMax = fluxVect[iLine];
 		}
 	}
 	fclose(FluxFile);
-	
-	
+
 	//Create new Bin Defs
 	binStep = fluxCDF.fluxMax / NFLUXBINS;
 	fluxCDF.binDefs[0] = 0;
@@ -440,7 +435,7 @@ int main(int argc, char *argv[]){
 		if(paramsWe.fluxBin >= 0){
 		FLFile = fopen(fluxFileStr,"a");
 		fluxAtStep = fluxes();
-		fprintf(FLFile, "%E \n", fluxAtStep);
+		fprintf(FLFile, "%E\n", fluxAtStep);
 		fclose(FLFile);
 			if(DEBUGGING){
 				debugFile = fopen("Debug.txt","a");
@@ -456,7 +451,9 @@ int main(int argc, char *argv[]){
 		
 		//KS Recording
 		if(nWE == fluxCDF.nT&&paramsWe.fluxBin >= 0){
-			KSTest(fluxFileStr);
+			FLFile = fopen(fluxFileStr,"r");
+			KSTest(FLFile, nWE);
+			fclose(FLFile);
 			}
 		
 		//Storing replicas struct without any stray NANs
