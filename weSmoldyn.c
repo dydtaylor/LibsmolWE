@@ -195,6 +195,15 @@ double fluxes(){
 						iSim = -1;
 					}
 				}
+				//Pretty sure these next few lines should be uncommented out to deal with edge case where iSimMax is in the flux bin
+				
+				if(Reps.binContents[iReps][paramsWe.fluxBin]== Reps.iSimMax-1){
+					simA=Reps.iSimMax-1;
+					Reps.sims[simA] = NULL;
+					Reps.weights[simA] = NAN;
+					Reps.binLocs[simA] = paramsWe.fluxBin;
+				}
+				else{
 				Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.sims[simA];
 				Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]] = Reps.weights[simA];
 				Reps.binLocs[Reps.binContents[iReps][paramsWe.fluxBin]] = findBin(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
@@ -207,6 +216,7 @@ double fluxes(){
 				Reps.weights[simA] = NAN;
 				Reps.binLocs[simA] = paramsWe.fluxBin;
 				Reps.sims[simA] = NULL;
+				}
 
 		}
 	}
@@ -283,7 +293,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 }
 
 void KSTest(FILE *FluxFile, int nWE){
-	FILE *KSFile, *debugKS;
+	FILE *KSFile; //, *debugKS;
 	int iLine, iBin;
 	double binStep, cdf1, cdf2, ksStat;
 	int nLines = nWE;
@@ -303,7 +313,6 @@ void KSTest(FILE *FluxFile, int nWE){
 			fluxCDF.fluxMax = fluxVect[iLine];
 		}
 	}
-	fclose(FluxFile);
 
 	//Create new Bin Defs
 	binStep = fluxCDF.fluxMax / NFLUXBINS;
@@ -351,6 +360,7 @@ void KSTest(FILE *FluxFile, int nWE){
 		fprintf(KSFile, "%i ", fluxCDF.oldCounts[iBin]);
 	}
 	fprintf(KSFile, "\n ksStat: %E \n nT %i \n",ksStat, fluxCDF.nT);
+	fclose(KSFile);
 	fluxCDF.nT *= 2;
 	return;
 }
@@ -451,9 +461,15 @@ int main(int argc, char *argv[]){
 		
 		//KS Recording
 		if(nWE == fluxCDF.nT&&paramsWe.fluxBin >= 0){
+			debugFile = fopen("Debug.txt","a");
+			fprintf(debugFile,"KS Recording \n");
+			fclose(debugFile);
 			FLFile = fopen(fluxFileStr,"r");
 			KSTest(FLFile, nWE);
 			fclose(FLFile);
+			debugFile = fopen("Debug.txt","a");
+			fprintf(debugFile,"KS Recording \n");
+			fclose(debugFile);
 			}
 		
 		//Storing replicas struct without any stray NANs
@@ -555,6 +571,8 @@ int main(int argc, char *argv[]){
 		dCounts[dMax+1]++;
 		
 		//Record weight distribution among bins
+		if(tauMax >= 1000){
+		if( (nWE+1) % (tauMax/1000) == 0){
 		SIMFile = fopen(argv[1],"a");
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
@@ -566,6 +584,20 @@ int main(int argc, char *argv[]){
 		fprintf(SIMFile, "****\n"); //Consider changing this. Can also consider making new file for each tau step
 		//overall sizes should stay reasonable either way
 		fclose(SIMFile);
+		}}
+		else{
+		SIMFile = fopen(argv[1],"a");
+		for(iBin = 0; iBin < Reps.nBins; iBin++){
+			binWeight = 0;
+			for(iBinContents=0;iBinContents < Reps.binContentsMax[iBin];iBinContents++){
+				binWeight += Reps.weights[Reps.binContents[iBinContents][iBin]];
+			}
+			fprintf(SIMFile,"%i, %E \n",iBin, binWeight);
+		}
+		fprintf(SIMFile, "****\n"); //Consider changing this. Can also consider making new file for each tau step
+		//overall sizes should stay reasonable either way
+		fclose(SIMFile);			
+		}
 		
 		
 		debugFile = fopen("Debug.txt","a");
@@ -580,16 +612,6 @@ int main(int argc, char *argv[]){
 	clockFile = fopen(argv[5],"w");
 	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
 	fclose(clockFile);
-
-	//Final Equilibrium Recording
-	debugFile = fopen("Debug.txt","a");
-	fprintf(debugFile,"Recording final sims  \n");
-	fclose(debugFile);
-	SIMFile = fopen(argv[1], "a");
-	for(iBin = 0;iBin < Reps.iSimMax; iBin++){
-		fprintf(SIMFile, "%i, %E \n", findBin(Reps.sims[iBin]), Reps.weights[iBin]);
-	}
-	fclose(SIMFile);
 
 	//Molecule counts recording
 	debugFile = fopen("Debug.txt","a");
