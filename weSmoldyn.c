@@ -375,7 +375,7 @@ int main(int argc, char *argv[]){
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *dimerDistFile;
 	char *fluxFileStr;
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
@@ -386,9 +386,14 @@ int main(int argc, char *argv[]){
 	
 	//Defining double for continuous dimer counting, gives more data points for comparing monomerization fraction
 	int dMax = paramsDe.nPart/2;
-	double dCounts[dMax + 2]; //Max dimers = nPart/2, min dimers = 0; so nPart/2 +1 possibilities for dimer frac, put in 1 more for storing number of recordings
+	double dCounts[dMax + 2]; //Max dimers = nPart/2, min dimers = 0; so nPart/2 +1 possibilities for dimer frac, put in 1 more for storing number of recordings 
+	//if DWEIGHT is enabled this ends up being number of tau steps, if DWEIGHT isn't enabled then this ends up being the sum of all iSimMax at the recording steps
+	//double dStep[dMax + 1]; //dimer Count at a single tau step
 	for(iDimer = 0; iDimer < dMax +2; iDimer++){
 		dCounts[iDimer] = 0;
+	}
+	for(iDimer = 0; iDimer < dMax +1; iDimer++){
+		//dStep[iDimer] = 0;
 	}
 	
 	tauMax = paramsWe.tauMax;
@@ -566,13 +571,22 @@ int main(int argc, char *argv[]){
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
-			dCounts[Reps.sims[iSim]->mols->nl[1]] += Reps.weights[iSim];
-		}
-		dCounts[dMax+1]++;
+			//Dimerization Fraction Recording
+			if(nWE > 2*tauMax/3){
+				if(DWEIGHTS){
+					dCounts[Reps.sims[iSim]->mols->nl[1]] += Reps.weights[iSim];
+				}
+				else{
+					dCounts[Reps.sims[iSim]->mols->nl[1]]++;
+				}
+			}
+			}
+		
+		dCounts[dMax+1]+=Reps.iSimMax;
 		
 		//Record weight distribution among bins
 		if(tauMax >= 1000){
-		if( (nWE+1) % (tauMax/1000) == 0){
+		if( (nWE+1) % (tauMax/1000) == 0 || nWE < 1000){
 		SIMFile = fopen(argv[1],"a");
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
@@ -581,9 +595,18 @@ int main(int argc, char *argv[]){
 			}
 			fprintf(SIMFile,"%i, %E \n",iBin, binWeight);
 		}
-		fprintf(SIMFile, "****\n"); //Consider changing this. Can also consider making new file for each tau step
+		fprintf(SIMFile, "\n"); //Consider changing this. Can also consider making new file for each tau step
 		//overall sizes should stay reasonable either way
 		fclose(SIMFile);
+			/*if(ROBINS){
+				dimerDistFile = fopen("dimerDist.txt","a");
+				for(iDimer = 0; iDimer<dMax+1; iDimer++){
+					fprintf(dimerDistFile,"%i, %E\n",iDimer,dStep[iDimer]);
+					dStep[iDimer] = 0;
+				}
+				fprintf(dimerDistFile,"\n");
+				fclose(dimerDistFile);
+			}*/
 		}}
 		else{
 		SIMFile = fopen(argv[1],"a");
@@ -594,10 +617,21 @@ int main(int argc, char *argv[]){
 			}
 			fprintf(SIMFile,"%i, %E \n",iBin, binWeight);
 		}
-		fprintf(SIMFile, "****\n"); //Consider changing this. Can also consider making new file for each tau step
+		fprintf(SIMFile, "\n"); //Consider changing this. Can also consider making new file for each tau step
 		//overall sizes should stay reasonable either way
-		fclose(SIMFile);			
+		fclose(SIMFile);
+			/*if(ROBINS){
+				dimerDistFile = fopen("dimerDist.txt","a");
+				for(iDimer = 0; iDimer<dMax+1; iDimer++){
+					fprintf(dimerDistFile,"%i, %E\n",iDimer,dStep[iDimer]);
+					dStep[iDimer] = 0;
+				}
+				fprintf(dimerDistFile,"\n");
+				fclose(dimerDistFile);
+			}*/
 		}
+		
+		
 		
 		
 		debugFile = fopen("Debug.txt","a");
@@ -624,7 +658,7 @@ int main(int argc, char *argv[]){
 	for(iDimer = 0; iDimer <= dMax; iDimer++){
 		fprintf(mCountsFile, "%i, %E \n", iDimer, dCounts[iDimer]); //Change later to not have hard code
 	}
-	fprintf(mCountsFile, "%E, %E", dCounts[dMax+1], (double)paramsDe.dt*paramsWe.tau);
+	fprintf(mCountsFile, "%E, %E", dCounts[dMax+1], (double)paramsWe.repsPerBin);
 	fclose(mCountsFile);
 	
 	//Free Memory and finish

@@ -24,9 +24,10 @@
 #define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 1
-#define STOPCOMMAND 1
+#define STOPCOMMAND 0
 #define WEENABLE 1
 #define ROBINS 1
+#define DWEIGHTS 0
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
