@@ -375,7 +375,7 @@ int main(int argc, char *argv[]){
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *dimerDistFile;
+	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
 	char *fluxFileStr;
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
@@ -384,16 +384,13 @@ int main(int argc, char *argv[]){
 	
 	getParams(DEFile, WEFile);
 	
-	//Defining double for continuous dimer counting, gives more data points for comparing monomerization fraction
-	int dMax = paramsDe.nPart/2;
-	double dCounts[dMax + 2]; //Max dimers = nPart/2, min dimers = 0; so nPart/2 +1 possibilities for dimer frac, put in 1 more for storing number of recordings 
-	//if DWEIGHT is enabled this ends up being number of tau steps, if DWEIGHT isn't enabled then this ends up being the sum of all iSimMax at the recording steps
-	//double dStep[dMax + 1]; //dimer Count at a single tau step
-	for(iDimer = 0; iDimer < dMax +2; iDimer++){
-		dCounts[iDimer] = 0;
-	}
-	for(iDimer = 0; iDimer < dMax +1; iDimer++){
-		//dStep[iDimer] = 0;
+	//Defining variables for continuous dimer counting, gives more data points for comparing monomerization fraction
+	int mCounts[3];
+	double  mCountsWeighted[3]; 
+	//These files will each give the total monomers, dimers, and either all "time" elapsed for all sims or all weight measured across
+	for(iDimer = 0; iDimer < 3; iDimer++){
+		mCounts[iDimer] = 0;
+		mCountsWeighted[iDimer] = 0;
 	}
 	
 	tauMax = paramsWe.tauMax;
@@ -572,17 +569,15 @@ int main(int argc, char *argv[]){
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 			//Dimerization Fraction Recording
-			if(nWE > 2*tauMax/3){
-				if(DWEIGHTS){
-					dCounts[Reps.sims[iSim]->mols->nl[1]] += Reps.weights[iSim];
-				}
-				else{
-					dCounts[Reps.sims[iSim]->mols->nl[1]]++;
-				}
+			if(nWE > tauMax/2){
+				mCounts[0] += smolGetMoleculeCount(Reps.sims[iSim], "A", MSall);
+				mCounts[1] += smolGetMoleculeCount(Reps.sims[iSim], "B", MSall);
+				mCounts[2]++;
+				mCountsWeighted[0] += (double) smolGetMoleculeCount(Reps.sims[iSim],"A", MSall) * Reps.weights[iSim];
+				mCountsWeighted[1] += (double) smolGetMoleculeCount(Reps.sims[iSim],"B", MSall) * Reps.weights[iSim];
+				mCountsWeighted[2] += Reps.weights[iSim];
 			}
 			}
-		
-		dCounts[dMax+1]+=Reps.iSimMax;
 		
 		//Record weight distribution among bins
 		if(tauMax >= 1000){
@@ -598,15 +593,7 @@ int main(int argc, char *argv[]){
 		fprintf(SIMFile, "\n"); //Consider changing this. Can also consider making new file for each tau step
 		//overall sizes should stay reasonable either way
 		fclose(SIMFile);
-			/*if(ROBINS){
-				dimerDistFile = fopen("dimerDist.txt","a");
-				for(iDimer = 0; iDimer<dMax+1; iDimer++){
-					fprintf(dimerDistFile,"%i, %E\n",iDimer,dStep[iDimer]);
-					dStep[iDimer] = 0;
-				}
-				fprintf(dimerDistFile,"\n");
-				fclose(dimerDistFile);
-			}*/
+		
 		}}
 		else{
 		SIMFile = fopen(argv[1],"a");
@@ -619,24 +606,22 @@ int main(int argc, char *argv[]){
 		}
 		fprintf(SIMFile, "\n"); //Consider changing this. Can also consider making new file for each tau step
 		//overall sizes should stay reasonable either way
-		fclose(SIMFile);
-			/*if(ROBINS){
-				dimerDistFile = fopen("dimerDist.txt","a");
-				for(iDimer = 0; iDimer<dMax+1; iDimer++){
-					fprintf(dimerDistFile,"%i, %E\n",iDimer,dStep[iDimer]);
-					dStep[iDimer] = 0;
-				}
-				fprintf(dimerDistFile,"\n");
-				fclose(dimerDistFile);
-			}*/
+		fclose(SIMFile);			
 		}
 		
 		
-		
-		
 		debugFile = fopen("Debug.txt","a");
-		fprintf(debugFile,"Dynamics Finished  \n");
+		fprintf(debugFile,"Dynamics Finished  \n Recording mCounts \n");
 		fclose(debugFile);
+		
+		if(nWE > tauMax/2){
+			mCountsFile = fopen("mCounts.txt","a");
+			fprintf(mCountsFile, "%i, %i, %i \n", mCounts[0], mCounts[1], mCounts[2]);
+			fclose(mCountsFile);
+			mCountsWeightedFile = fopen("mCountsWeighted.txt","a");
+			fprintf(mCountsWeightedFile, "%f, %f, %f \n", mCountsWeighted[0], mCountsWeighted[1],mCountsWeighted[2]);
+			fclose(mCountsWeightedFile);
+		}
 	}
 	
 	stop[3] = clock();
@@ -646,20 +631,6 @@ int main(int argc, char *argv[]){
 	clockFile = fopen(argv[5],"w");
 	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
 	fclose(clockFile);
-
-	//Molecule counts recording
-	debugFile = fopen("Debug.txt","a");
-	fprintf(debugFile,"Recording mCounts  \n");
-	fclose(debugFile);
-	
-	
-	
-	mCountsFile = fopen("mCounts.txt", "a");
-	for(iDimer = 0; iDimer <= dMax; iDimer++){
-		fprintf(mCountsFile, "%i, %E \n", iDimer, dCounts[iDimer]); //Change later to not have hard code
-	}
-	fprintf(mCountsFile, "%E, %E", dCounts[dMax+1], (double)paramsWe.repsPerBin);
-	fclose(mCountsFile);
 	
 	//Free Memory and finish
 	freeAllSims();
