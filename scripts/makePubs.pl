@@ -17,6 +17,7 @@
 #\$ -N $run_name
 #\$ -q rxn,free64,pub64
 #\$ -ckpt restart
+#\$ -r y
 #\$ -e $run_name.err
 #\$ -o $run_name.log
 cd /data/users/robertbt/WELibsmolData/$run_name
