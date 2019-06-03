@@ -15,7 +15,7 @@
     print FOOD << "EOF";
 #!/bin/bash
 #\$ -N $run_name
-#\$ -q bio,abio,free64,pub64
+#\$ -q rxn,free64,pub64
 #\$ -ckpt restart
 #\$ -e $run_name.err
 #\$ -o $run_name.log
@@ -27,7 +27,7 @@ echo Time is `date`
 echo Directory is `pwd`
 # Run executable
 
-./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time >>$run_name.smolOut
+./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time &>/dev/null
 echo Finished at `date`
 EOF
     close FOOD;
