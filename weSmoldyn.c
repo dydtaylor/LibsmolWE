@@ -577,11 +577,11 @@ int main(int argc, char *argv[]){
 			//Dimerization Fraction Recording
 			if(!MONOFRACEACHDT){
  			if(nWE > tauMax/2){
-				mCounts[0] += currentSim->mols->nl[0];
-				mCounts[1] += currentSim->mols->nl[1];
+				mCounts[0] += Reps.sims[iSim]->mols->nl[0];
+				mCounts[1] += Reps.sims[iSim]->mols->nl[1];
 				mCounts[2]++;
-				mCountsWeighted[0] += (double) currentSim->mols->nl[0] * Reps.weights[iSim];
-				mCountsWeighted[1] += (double) currentSim->mols->nl[1] * Reps.weights[iSim];
+				mCountsWeighted[0] += (double) Reps.sims[iSim]->mols->nl[0] * Reps.weights[iSim];
+				mCountsWeighted[1] += (double) Reps.sims[iSim]->mols->nl[1] * Reps.weights[iSim];
 				mCountsWeighted[2] += Reps.weights[iSim];
 			} 
 			}
