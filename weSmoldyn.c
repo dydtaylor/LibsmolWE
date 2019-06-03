@@ -394,9 +394,11 @@ int main(int argc, char *argv[]){
 	}
 	
 	tauMax = paramsWe.tauMax;
-	debugFile = fopen("Debug.txt","a");
-	fprintf(debugFile,"Tau loops + flux vector made \n");
-	fclose(debugFile);
+	if(DEBUGGING){
+		debugFile = fopen("Debug.txt","a");
+		fprintf(debugFile,"Tau loops + flux vector made \n");
+		fclose(debugFile);
+	}
 	//Set + record new RNG seed, set up initial distribution
 	rngBit = atoi(argv[4]);
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
@@ -414,9 +416,11 @@ int main(int argc, char *argv[]){
 	start[0] = clock();
 	initialDist(paramsWe.nInit);
 	stop[0] = clock();
+	if(DEBUGGING){
 	debugFile = fopen("Debug.txt","a");
 	fprintf(debugFile, "Initial Distribution Made \n");
 	fclose(debugFile);
+	}
 	//Set other key initial values in replicas struct
 	for(int iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
@@ -430,19 +434,17 @@ int main(int argc, char *argv[]){
 	nanCheck = 0;
 	firstNAN = 0;
 
-	printf("Initial Distribution Made \n");
-	printf("Initial Bin Location = %i \n", Reps.binLocs[0]);
-
 	start[3] = clock();
 	
 	//Simulation Loop
 	for(nWE = 0; nWE < tauMax; nWE++){
 		
 		//Print current tau step to stdout for interactive debugging
+		if(DEBUGGING){
 		debugFile = fopen("Debug.txt","a");
 		fprintf(debugFile,"Tau Step: %i \n", nWE);
 		fclose(debugFile);
-		
+		}
 		//Flux Recording
 		if(paramsWe.fluxBin >= 0){
 		FLFile = fopen(fluxFileStr,"a");
@@ -463,15 +465,19 @@ int main(int argc, char *argv[]){
 		
 		//KS Recording
 		if(nWE == fluxCDF.nT&&paramsWe.fluxBin >= 0){
-			debugFile = fopen("Debug.txt","a");
-			fprintf(debugFile,"KS Recording \n");
-			fclose(debugFile);
+			if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"KS Recording \n");
+				fclose(debugFile);
+			}
 			FLFile = fopen(fluxFileStr,"r");
 			KSTest(FLFile, nWE);
 			fclose(FLFile);
-			debugFile = fopen("Debug.txt","a");
-			fprintf(debugFile,"KS Recording \n");
-			fclose(debugFile);
+			if(DEBUGGING){
+				debugFile = fopen("Debug.txt","a");
+				fprintf(debugFile,"KS Recording \n");
+				fclose(debugFile);
+			}
 			}
 		
 		//Storing replicas struct without any stray NANs
@@ -560,7 +566,7 @@ int main(int argc, char *argv[]){
 			if(nWE == 10){
 				start[2] = clock();
 			}
-			dynamicsEngine(Reps.sims[iSim]);
+			dynamicsEngine(Reps.sims[iSim], mCounts, mCountsWeighted, nWE, iSim);
 			
 			if(nWE == 10){
 				stop[2] = clock();
@@ -569,15 +575,17 @@ int main(int argc, char *argv[]){
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 			//Dimerization Fraction Recording
-			if(nWE > tauMax/2){
-				mCounts[0] += smolGetMoleculeCount(Reps.sims[iSim], "A", MSall);
-				mCounts[1] += smolGetMoleculeCount(Reps.sims[iSim], "B", MSall);
+			if(!MONOFRACEACHDT){
+ 			if(nWE > tauMax/2){
+				mCounts[0] += currentSim->mols->nl[0];
+				mCounts[1] += currentSim->mols->nl[1];
 				mCounts[2]++;
-				mCountsWeighted[0] += (double) smolGetMoleculeCount(Reps.sims[iSim],"A", MSall) * Reps.weights[iSim];
-				mCountsWeighted[1] += (double) smolGetMoleculeCount(Reps.sims[iSim],"B", MSall) * Reps.weights[iSim];
+				mCountsWeighted[0] += (double) currentSim->mols->nl[0] * Reps.weights[iSim];
+				mCountsWeighted[1] += (double) currentSim->mols->nl[1] * Reps.weights[iSim];
 				mCountsWeighted[2] += Reps.weights[iSim];
+			} 
 			}
-			}
+	}
 		
 		//Record weight distribution among bins
 		if(tauMax >= 1000){
@@ -609,10 +617,11 @@ int main(int argc, char *argv[]){
 		fclose(SIMFile);			
 		}
 		
-		
-		debugFile = fopen("Debug.txt","a");
-		fprintf(debugFile,"Dynamics Finished  \n Recording mCounts \n");
-		fclose(debugFile);
+		if(DEBUGGING){
+			debugFile = fopen("Debug.txt","a");
+			fprintf(debugFile,"Dynamics Finished  \n Recording mCounts \n");
+			fclose(debugFile);
+		}
 		
 		if(nWE > tauMax/2){
 			mCountsFile = fopen("mCounts.txt","a");
