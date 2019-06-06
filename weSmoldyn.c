@@ -481,6 +481,7 @@ int main(int argc, char *argv[]){
 			}
 		
 		//Storing replicas struct without any stray NANs
+		if(DEBUGGING){
 		if(nanCheck == 0){
 			structStoreFile = fopen("SimStructs.txt", "w");
 			fprintf(structStoreFile, "Tau = %i \n", nWE);
@@ -494,6 +495,7 @@ int main(int argc, char *argv[]){
 				fprintf(structStoreFile, "\n");
 			}
 			fclose(structStoreFile);
+		}
 		}
 		
 		//Splitting and Merging
@@ -512,19 +514,20 @@ int main(int argc, char *argv[]){
 		}
 		
 		//Checking for first appearance of stray NANs
-		if(nanCheck == 0){
-		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
-			if(Reps.weights[iSim] != Reps.weights[iSim]){
-				nanCheck = 1;
-			}
-		}
-		}
-		
 		if(DEBUGGING){
+			if(nanCheck == 0){
+			for(iSim = 0; iSim < Reps.iSimMax; iSim++){
+				if(Reps.weights[iSim] != Reps.weights[iSim]){
+					nanCheck = 1;
+				}
+			}
+			}
+		
+		
 				debugFile = fopen("Debug.txt","a");
 				fprintf(debugFile,"Nans checked \n");
 				fclose(debugFile);
-			}
+		
 		
 		//Recording stray NANs (only the first time they appear)
 		if((nanCheck == 1 && firstNAN == 0)){
@@ -541,7 +544,7 @@ int main(int argc, char *argv[]){
 			fclose(structNANFile);
 			firstNAN = 1;
 		}
-		
+		}
 		
 		if(nWE ==10){
 			stop[1] = clock();
