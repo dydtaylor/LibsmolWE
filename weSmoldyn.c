@@ -627,9 +627,9 @@ int main(int argc, char *argv[]){
 		}
 		
 		if(nWE > tauMax/2){
-			mCountsFile = fopen("mCounts.txt","a");
-			fprintf(mCountsFile, "%i, %i, %i \n", mCounts[0], mCounts[1], mCounts[2]);
-			fclose(mCountsFile);
+			//mCountsFile = fopen("mCounts.txt","a");
+			//fprintf(mCountsFile, "%i, %i, %i \n", mCounts[0], mCounts[1], mCounts[2]);
+			//fclose(mCountsFile);
 			mCountsWeightedFile = fopen("mCountsWeighted.txt","a");
 			fprintf(mCountsWeightedFile, "%f, %f, %f \n", mCountsWeighted[0], mCountsWeighted[1],mCountsWeighted[2]);
 			fclose(mCountsWeightedFile);
