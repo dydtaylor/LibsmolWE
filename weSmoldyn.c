@@ -292,6 +292,20 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	printf("Parameters loaded\n");
 }
 
+void loadBinDefs(FILE *binParams, FILE *binDefinitions){
+	
+	char tmpChar[32];
+	int iBin, iNbin;
+	fscanf(binParams,"%s %i", tmpChar, &binDefs.customBins);
+	fscanf(binParams,"%s %i", tmpChar, &binDefs.currentDims);
+	fscanf(binParams,"%s %i",tmpChar, &binDefs.nBins);
+	if(binDefs.customBins == 1){
+	for(int iBinDef = 0; iBinDef < (2*binDefs.currentDims*binDefs.nBins); iBinDef++){
+		fscanf(binDefinitions,"%lf", &binDefs.binDefArray[iBinDef]);
+	}
+	}
+}
+
 void KSTest(FILE *FluxFile, int nWE){
 	FILE *KSFile; //, *debugKS;
 	int iLine, iBin;
@@ -377,12 +391,20 @@ int main(int argc, char *argv[]){
 	//Load simulation / WE parameters from outside files
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
 	char *fluxFileStr;
+	FILE *binDefinitions, *binParams;
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
 	errFile = fopen(argv[3], "w");
 	
 	getParams(DEFile, WEFile);
+	fclose(DEFile);
+	fclose(WEFile);
+	binParams = fopen("binParams.txt","r");
+	binDefinitions = fopen("binDefinitions.txt","r");
+	loadBinDefs(binParams, binDefinitions);
+	fclose(binParams);
+	fclose(binDefinitions);
 	
 	//Defining variables for continuous dimer counting, gives more data points for comparing monomerization fraction
 	int mCounts[3];
@@ -591,6 +613,7 @@ int main(int argc, char *argv[]){
 	}
 		
 		//Record weight distribution among bins
+		/*
 		if(tauMax >= 1000){
 		if( (nWE+1) % (tauMax/1000) == 0 || nWE < 1000){
 		SIMFile = fopen(argv[1],"a");
@@ -618,7 +641,7 @@ int main(int argc, char *argv[]){
 		fprintf(SIMFile, "\n"); //Consider changing this. Can also consider making new file for each tau step
 		//overall sizes should stay reasonable either way
 		fclose(SIMFile);			
-		}
+		}*/
 		
 		if(DEBUGGING){
 			debugFile = fopen("Debug.txt","a");

@@ -84,26 +84,69 @@ void dynamicsEngine(simptr currentSim, int mCounts[], double mCountsWeighted[], 
 	}
 }
 
-int findBin(simptr currentSim){
-	//Finds number of molecules inside the ROI by inspecting each molecule's location
-	int nInBin, nMol, nMolList;
+int findOrderParameter(simptr currentSim, int orderParamIndex){
+	int nMol, nMolList, orderParam;
 	double molX, molY;
-	nInBin = 0;
-	if(ROBINS){
-	for(nMolList = 0; nMolList < currentSim->mols->nlist; nMolList++){ 
-	for(nMol = 0; nMol < currentSim->mols->nl[nMolList]; nMol++){
+	orderParam = 0;
+	
+	if(orderParamIndex == ROIORDERPARAM){
+		for(nMolList = 0; nMolList < currentSim->mols->nlist; nMolList++){ 
+		for(nMol = 0; nMol < currentSim->mols->nl[nMolList]; nMol++){
 		molX = currentSim->mols->live[nMolList][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[nMolList][nMol]->pos[1];
 		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
-			nInBin++;
+			orderParam++;
+		}
+		}
 		}
 	}
+	
+	if(orderParamIndex == DIMERORDERPARAM){
+		orderParam = currentSim->mols->nl[1];
 	}
-	};
-	if(!ROBINS){
-		nInBin = currentSim->mols->nl[0]; //Sets bin to # of monomers
+	
+	return orderParam;
+}
+
+int findBin(simptr currentSim){
+	int ordParam1, ordParam2, iBin, binOut;
+	
+	ordParam1 = findOrderParameter(currentSim, ROIORDERPARAM);
+	ordParam2 = findOrderParameter(currentSim, DIMERORDERPARAM);
+	
+	if(binDefs.customBins == 1){
+	for(iBin = 0; iBin < binDefs.nBins; iBin++){
+		if (binDefs.currentDims==2){
+		if((ordParam1 >= binDefs.binDefArray[4*iBin]) && (ordParam1 <= binDefs.binDefArray[4*iBin+1]) && (ordParam2 >= binDefs.binDefArray[4*iBin+2]) && (ordParam2 <= binDefs.binDefArray[4*iBin+3])){
+			binOut = iBin;
+			iBin = binDefs.nBins;
+		}
+		}
+		if(binDefs.currentDims==1 && ROBINS){
+			if((ordParam1 >= binDefs.binDefArray[2*iBin])&&(ordParam1>=binDefs.binDefArray[2*iBin+1])){
+				binOut=iBin;
+				iBin = binDefs.nBins;
+			}
+		}
+		if(binDefs.currentDims==1&& (!ROBINS)){
+			if((ordParam2 >= binDefs.binDefArray[2*iBin])&&(ordParam2>=binDefs.binDefArray[2*iBin+1])){
+				binOut=iBin;
+				iBin = binDefs.nBins;
+			}
+		}
+		}
 	}
-	return nInBin;
+	
+	else{
+		if(ROBINS){
+			binOut = ordParam1;
+		}
+		if(!ROBINS){
+			binOut = ordParam1;
+		}
+	}
+	
+	return binOut;
 }
 
 void freeAllSims(){

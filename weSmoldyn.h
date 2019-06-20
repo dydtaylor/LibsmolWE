@@ -24,10 +24,12 @@
 #define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 0
-#define STOPCOMMAND 0
+#define STOPCOMMAND 1
 #define WEENABLE 1
 #define ROBINS 1
 #define MONOFRACEACHDT 0
+#define ROIORDERPARAM 1
+#define DIMERORDERPARAM 2 //These two macros are arbitrary, but they do need to be different
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
@@ -71,10 +73,18 @@ struct fluxCounts{
 	int nT;
 };
 
+struct BinDefinitions{
+	double binDefArray[4*NBINSMAX];
+	int nBins;
+	int currentDims;
+	int customBins;
+};
+
 struct paramsWeightedEnsemble paramsWe;
 struct paramsDynamicsEngine paramsDe;
 struct replicas Reps;
 struct fluxCounts fluxCDF;
+struct BinDefinitions binDefs;
 
 double lowBounds[2];
 double highBounds[2];
