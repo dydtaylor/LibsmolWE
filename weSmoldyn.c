@@ -398,6 +398,8 @@ int main(int argc, char *argv[]){
 	errFile = fopen(argv[3], "w");
 	
 	getParams(DEFile, WEFile);
+	fclose(DEFile);
+	fclose(WEFile);
 	binParams = fopen("binParams.txt","r");
 	binDefinitions = fopen("binDefinitions.txt","r");
 	loadBinDefs(binParams, binDefinitions);

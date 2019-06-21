@@ -117,19 +117,19 @@ int findBin(simptr currentSim){
 	if(binDefs.customBins == 1){
 	for(iBin = 0; iBin < binDefs.nBins; iBin++){
 		if (binDefs.currentDims==2){
-		if((ordParam1 >= binDefs.binDefArray[4*iBin]) && (ordParam1 <= binDefs.binDefArray[4*iBin+1]) && (ordParam2 >= binDefs.binDefArray[4*iBin+2]) && (ordParam2 <= binDefs.binDefArray[4*iBin+3])){
+		if((ordParam1 >= binDefs.binDefArray[4*iBin]) && (ordParam1 < binDefs.binDefArray[4*iBin+1]) && (ordParam2 >= binDefs.binDefArray[4*iBin+2]) && (ordParam2 < binDefs.binDefArray[4*iBin+3])){
 			binOut = iBin;
 			iBin = binDefs.nBins;
 		}
 		}
 		if(binDefs.currentDims==1 && ROBINS){
-			if((ordParam1 >= binDefs.binDefArray[2*iBin])&&(ordParam1>=binDefs.binDefArray[2*iBin+1])){
+			if((ordParam1 >= binDefs.binDefArray[2*iBin])&&(ordParam1<binDefs.binDefArray[2*iBin+1])){
 				binOut=iBin;
 				iBin = binDefs.nBins;
 			}
 		}
 		if(binDefs.currentDims==1&& (!ROBINS)){
-			if((ordParam2 >= binDefs.binDefArray[2*iBin])&&(ordParam2>=binDefs.binDefArray[2*iBin+1])){
+			if((ordParam2 >= binDefs.binDefArray[2*iBin])&&(ordParam2<binDefs.binDefArray[2*iBin+1])){
 				binOut=iBin;
 				iBin = binDefs.nBins;
 			}
