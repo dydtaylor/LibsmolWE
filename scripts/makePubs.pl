@@ -37,7 +37,7 @@ export LD_LIBRARY_PATH
 echo Running on host `hostname`
 echo Time is `date`
 echo Directory is `pwd`
-# Run executable
+## Run executable
 
 ./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time &>/dev/null
 ##Move Output to the save directory
