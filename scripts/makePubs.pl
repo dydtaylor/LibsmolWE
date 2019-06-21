@@ -10,6 +10,8 @@
     #pub file name
     my $run_name=$ARGV[0];
 	my $file_name=$run_name . ".pub";
+	my $tempDir="/tmp/robertbt/${run_name}";
+	my $saveDir="/dfs3/pub/robertbt/WELibsmolData/${run_name}";
     #open file for writing and print the following
     open(FOOD, ">pubs/$file_name" );
     print FOOD << "EOF";
@@ -20,7 +22,16 @@
 #\$ -r y
 #\$ -e $run_name.err
 #\$ -o $run_name.log
-cd /data/users/robertbt/WELibsmolData/$run_name
+##Make temp folders for execution
+mkdir /tmp/robertbt
+mkdir $tempDir 
+
+##Copy files from the save directory to the temp folder
+cd $saveDir
+cp weSmoldyn WEParams.txt dynamicsParams.txt ISEED $run_name.pub $tempDir
+
+##Execute code
+cd $tempDir
 LD_LIBRARY_PATH=/data/users/robertbt/lib
 export LD_LIBRARY_PATH
 echo Running on host `hostname`
@@ -29,6 +40,15 @@ echo Directory is `pwd`
 # Run executable
 
 ./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time &>/dev/null
+##Move Output to the save directory
+cp $run_name.Out $run_name.Flux $run_name.seed $run_name.Time mCountsWeighted.txt $saveDir
+if [ -e ksOut.txt ];
+then
+cp ksOut.txt $saveDir
+fi
+cd ..
+##Cleanup temp directory
+rm -rf tmp/robertbt/$run_name
 echo Finished at `date`
 EOF
     close FOOD;

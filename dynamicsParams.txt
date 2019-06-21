@@ -3,7 +3,7 @@ worldL	3
 roiR	1
 difM	1
 difD	0.5
-bindR	0.4
-unbindK	10000
+bindR	1.0
+unbindK	1
 nPart	20
-reactBit 0
+reactBit 1
