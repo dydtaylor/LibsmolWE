@@ -295,12 +295,12 @@ void getParams(FILE *DEFile, FILE *WEFile){
 void loadBinDefs(FILE *binParams, FILE *binDefinitions){
 	
 	char tmpChar[32];
-	int iBin, iNbin;
+	int iBinDef;
 	fscanf(binParams,"%s %i", tmpChar, &binDefs.customBins);
 	fscanf(binParams,"%s %i", tmpChar, &binDefs.currentDims);
 	fscanf(binParams,"%s %i",tmpChar, &binDefs.nBins);
 	if(binDefs.customBins == 1){
-	for(int iBinDef = 0; iBinDef < (2*binDefs.currentDims*binDefs.nBins); iBinDef++){
+	for(iBinDef = 0; iBinDef < (2*binDefs.currentDims*binDefs.nBins); iBinDef++){
 		fscanf(binDefinitions,"%lf", &binDefs.binDefArray[iBinDef]);
 	}
 	}
@@ -384,12 +384,12 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents; //tauQuarter omitted
-	double fluxAtStep, binWeight;
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer; //tauQuarter omitted
+	double fluxAtStep;
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
+	FILE *DEFile, *WEFile, *FLFile, *errFile, *clockFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile; //*mCountsFile,*SIMFile;
 	char *fluxFileStr;
 	FILE *binDefinitions, *binParams;
 	fluxFileStr = argv[2];
