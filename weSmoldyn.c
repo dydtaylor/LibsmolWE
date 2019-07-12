@@ -293,9 +293,9 @@ void getParams(FILE *DEFile, FILE *WEFile){
 }
 
 void KSTest(FILE *FluxFile, int nWE){
-	FILE *KSFile; //, *debugKS;
-	int iLine, iBin;
-	double binStep, cdf1, cdf2, ksStat;
+	FILE *KSFile, *nzKSFile; //, *debugKS;
+	int iLine, iBin, nzCounter[2];
+	double binStep, cdf1, cdf2, ksStat, nzCDF1, nzCDF2, nonZeroKS;
 	int nLines = nWE;
 	double fluxVect[nWE];
 	
@@ -306,6 +306,8 @@ void KSTest(FILE *FluxFile, int nWE){
 	}
 
 	//load flux
+	nzCounter[0] = 0; //Necessary parameter for normalizing the non-zero CDF.
+	nzCounter[1] = 0;
 	fluxCDF.fluxMax = 0;
 	for(iLine = 0; iLine < nLines; iLine++){
 		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
@@ -326,6 +328,10 @@ void KSTest(FILE *FluxFile, int nWE){
 		for(iBin=0;iBin<NFLUXBINS;iBin++){
 			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.oldCounts[iBin]++;
+				if(fluxVect[iLine]>0){
+					fluxCDF.oldNonZeroBC[iBin]++;
+					nzCounter[0]++;
+				}
 			}
 		}
 	}
@@ -334,6 +340,10 @@ void KSTest(FILE *FluxFile, int nWE){
 		for(iBin=0;iBin<NFLUXBINS;iBin++){
 			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.binCounts[iBin]++;
+				if(fluxVect[iLine]>0){
+					fluxCDF.nonZeroBC[iBin]++;
+					nzCounter[1]++;
+				}
 			}
 		}
 	}
@@ -341,12 +351,20 @@ void KSTest(FILE *FluxFile, int nWE){
 	//Perform KS Test
 	cdf1 = 0;
 	cdf2 = 0;
+	nzCDF1 = 0;
+	nzCDF2 = 0;
 	ksStat = 0;
+	nonZeroKS = 0;
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT/3);
 		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT/3);
+		nzCDF1 += (double)fluxCDF.oldNonZeroBC[iBin]/nzCounter[0];
+		nzCDF2 += (double)fluxCDF.nonZeroBC[iBin]/nzCounter[1];
 		if(fabs(cdf1-cdf2)>ksStat){
 			ksStat = fabs(cdf1-cdf2);
+		}
+		if(fabs(nzCDF1-nzCDF2)>nonZeroKS){
+			nonZeroKS = fabs(nzCDF1-nzCDF2)
 		}
 	}
 	
@@ -361,6 +379,21 @@ void KSTest(FILE *FluxFile, int nWE){
 	}
 	fprintf(KSFile, "\n ksStat: %E \n nT %i \n",ksStat, fluxCDF.nT);
 	fclose(KSFile);
+	
+	nzKSFile = fopen("ksNonZero.txt","a");
+	fprintf(nzKSFile, "maxFlux = %E \n", fluxCDF.fluxMax);
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		fprintf(nzKSFile, "%i ", fluxCDF.nonZeroBC[iBin]);
+	}
+	fprintf(nzKSFile, "\n");
+	for(iBin = 0; iBin < NFLUXBINS; iBin++){
+		fprintf(nzKSFile, "%i ", fluxCDF.oldNonZeroBC[iBin]);
+	}
+	fprintf(nzKSFile, "\n ksStat: %E \n nT %i \n \n nzCounts %i",nonZeroKS, fluxCDF.nT,nzCounter[0]+nzCounter[1]);
+	fclose(nzKSFile);
+	
+	fluxCDF.ksStat = ksStat;
+	fluxCDF.nonZeroKS = nonZeroKS;
 	fluxCDF.nT *= 2;
 	return;
 }
@@ -370,13 +403,14 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents; //tauQuarter omitted
-	double fluxAtStep, binWeight;
+	int tauMax, tauOrig, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit; //tauQuarter omitted
+	double fluxAtStep, binWeight, clockDouble[4];
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
 	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
 	char *fluxFileStr;
+	if(1){ //the only reason this exists is so that i can minimize this part while editing
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
@@ -391,6 +425,9 @@ int main(int argc, char *argv[]){
 	for(iDimer = 0; iDimer < 3; iDimer++){
 		mCounts[iDimer] = 0;
 		mCountsWeighted[iDimer] = 0;
+	}
+	for(iClockInit = 0; iClockInit<=3; iClockInit++){
+		clockDouble[iClockInit]=0;
 	}
 	
 	tauMax = paramsWe.tauMax;
@@ -416,6 +453,7 @@ int main(int argc, char *argv[]){
 	start[0] = clock();
 	initialDist(paramsWe.nInit);
 	stop[0] = clock();
+	clockDouble[0]+=(double)(stop[0]-start[0])/CLOCKS_PER_SEC;
 	if(DEBUGGING){
 	debugFile = fopen("Debug.txt","a");
 	fprintf(debugFile, "Initial Distribution Made \n");
@@ -435,7 +473,8 @@ int main(int argc, char *argv[]){
 	firstNAN = 0;
 
 	start[3] = clock();
-	
+	}
+	tauOrig = tauMax;
 	//Simulation Loop
 	for(nWE = 0; nWE < tauMax; nWE++){
 		
@@ -459,9 +498,9 @@ int main(int argc, char *argv[]){
 		}
 		
 		//Single Step Time Measurement
-		if(nWE == 10){
+		
 			start[1] = clock();
-		}
+		
 		
 		//KS Recording
 		if(nWE == fluxCDF.nT&&paramsWe.fluxBin >= 0){
@@ -546,9 +585,10 @@ int main(int argc, char *argv[]){
 		}
 		}
 		
-		if(nWE ==10){
-			stop[1] = clock();
-		}
+		
+		stop[1] = clock();
+		clockDouble[1]+=(double)(stop[1]-start[1])/CLOCKS_PER_SEC;
+		
 		
 		if(DEBUGGING){
 			debugFile = fopen("Debug.txt","a");
@@ -566,14 +606,10 @@ int main(int argc, char *argv[]){
 				fprintf(debugFile,"Sim %i dynamics starting  \n", iSim);
 				fclose(debugFile);
 						 }*/
-			if(nWE == 10){
-				start[2] = clock();
-			}
+			start[2] = clock();
 			dynamicsEngine(Reps.sims[iSim], mCounts, mCountsWeighted, nWE, iSim);
-			
-			if(nWE == 10){
-				stop[2] = clock();
-			}
+			stop[2] = clock();
+			clockDouble[2]+=(double)(stop[2]-start[2])/CLOCKS_PER_SEC;
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
 			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
@@ -637,11 +673,11 @@ int main(int argc, char *argv[]){
 	}
 	
 	stop[3] = clock();
-
+	clockDouble[3]+=(double)(stop[3]-start[3])/CLOCKS_PER_SEC;
 	
 	//Time Recording
 	clockFile = fopen(argv[5],"w");
-	fprintf(clockFile,"%E \n %E \n %E \n %E \n",(double)(stop[0]-start[0])/CLOCKS_PER_SEC, (double)(stop[1]-start[1])/CLOCKS_PER_SEC, (double)(stop[2]-start[2])/CLOCKS_PER_SEC, (double)(stop[3]-start[3])/CLOCKS_PER_SEC);
+	fprintf(clockFile,"%E \n%E \n%E \n%E \n",clockDouble[0],clockDouble[1],clockDouble[2],clockDouble[3]);
 	fclose(clockFile);
 	
 	//Free Memory and finish

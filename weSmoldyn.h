@@ -24,7 +24,7 @@
 #define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 0
-#define STOPCOMMAND 0
+#define STOPCOMMAND 1
 #define WEENABLE 1
 #define ROBINS 1
 #define MONOFRACEACHDT 0
@@ -66,8 +66,12 @@ struct replicas{
 struct fluxCounts{
 	double fluxMax;
 	double binDefs[NFLUXBINS+1];
+	double ksStat;
+	double nonZeroKS;
 	int binCounts[NFLUXBINS];
 	int oldCounts[NFLUXBINS];
+	int nonZeroBC[NFLUXBINS];
+	int oldNonZeroBC[NFLUXBINS];
 	int nT;
 };
 
