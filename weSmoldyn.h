@@ -1,3 +1,21 @@
+Skip to content
+ 
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@dydtaylor 
+0
+0 1 dydtaylor/LibsmolWE
+ Code  Issues 0  Pull requests 0  Projects 0  Wiki  Security  Insights  Settings
+LibsmolWE/weSmoldyn.h
+@dydtaylor dydtaylor Changed timing, non-zero KS draft
+259d12a 19 hours ago
+89 lines (78 sloc)  2 KB
+    
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +42,7 @@
 #define NFLUXBINS 75
 #define KSCRITICAL .02
 #define DEBUGGING 0
-#define STOPCOMMAND 0
+#define STOPCOMMAND 1
 #define WEENABLE 1
 #define ROBINS 1
 #define MONOFRACEACHDT 0
@@ -66,8 +84,12 @@ struct replicas{
 struct fluxCounts{
 	double fluxMax;
 	double binDefs[NFLUXBINS+1];
+	double ksStat;
+	double nonZeroKS;
 	int binCounts[NFLUXBINS];
 	int oldCounts[NFLUXBINS];
+	int nonZeroBC[NFLUXBINS];
+	int oldNonZeroBC[NFLUXBINS];
 	int nT;
 };
 
@@ -82,3 +104,15 @@ double botLeftCornerRect[3];
 double topRightCornerRect[3];
 double roiParams[4];
 double insideRoi[2];
+© 2019 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About

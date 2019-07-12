@@ -60,6 +60,7 @@ void initialDist(int nInit){
 		smolAddCompartment(Reps.sims[jSim],"roiComp");
 		smolAddCompartmentSurface(Reps.sims[jSim],"roiComp","roi");
 		smolAddCompartmentPoint(Reps.sims[jSim],"roiComp",insideRoi);
+		smolSetPartitions(Reps.sims[jSim],"molperbox",20);
 		smolUpdateSim(Reps.sims[jSim]);
 		
 		//Reps.sims[jSim]->logfile = nulldev;
