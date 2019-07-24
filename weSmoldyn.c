@@ -250,6 +250,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.tauMax);
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.nBins);
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.fluxBin);
+	fscanf(WEFile,"%s %i" ,tmpStr, &fluxCDF.nT);
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.dt);
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.worldLength);
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.roiR);
@@ -282,7 +283,6 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	insideRoi[0] = 0.0;
 	insideRoi[1] = 0.0;
 	
-	fluxCDF.nT = 300;
 	for(jBin = 0; jBin < NFLUXBINS; jBin++){
 		fluxCDF.binCounts[jBin] = 0;
 	}
@@ -308,7 +308,7 @@ void KSTest(FILE *FluxFile, int nWE){
 	//load flux
 	zeroCounts[0] = 0; //Necessary parameter for normalizing the non-zero CDF.
 	zeroCounts[1] = 0;
-	zeroCoutns[2] = 0;
+	zeroCounts[2] = 0;
 	fluxCDF.fluxMax = 0;
 	for(iLine = 0; iLine < nLines; iLine++){
 		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
@@ -327,7 +327,7 @@ void KSTest(FILE *FluxFile, int nWE){
 	//Update Bin Counts
 	for(iLine = (nLines/3) - 1; iLine < (2*nLines/3); iLine++){
 		for(iBin=0;iBin<NFLUXBINS;iBin++){
-			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
+			if(fluxVect[iLine]>=fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.oldCounts[iBin]++;
 				fluxCDF.oldDualCounts[iBin]++;
 				if(fluxVect[iLine]==0){
@@ -339,7 +339,7 @@ void KSTest(FILE *FluxFile, int nWE){
 	
 	for(iLine = (2*nLines/3); iLine < nLines; iLine++){
 		for(iBin=0;iBin<NFLUXBINS;iBin++){
-			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
+			if(fluxVect[iLine]>=fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.binCounts[iBin]++;
 				fluxCDF.dualCounts[iBin]++;
 				if(fluxVect[iLine]==0){
@@ -357,7 +357,7 @@ void KSTest(FILE *FluxFile, int nWE){
 		zeroCounts[2] = zeroCounts[0];
 	}
 	fluxCDF.dualCounts[0] -= zeroCounts[2];
-	fluxCDF.oldDualCounts -= zeroCounts[2];
+	fluxCDF.oldDualCounts[0] -= zeroCounts[2];
 	//Perform KS Test
 	cdf1 = 0;
 	cdf2 = 0;
@@ -368,8 +368,8 @@ void KSTest(FILE *FluxFile, int nWE){
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT/3);
 		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT/3);
-		dualCDF1 += (double)fluxCDF.oldDualCounts[iBin]/(fluxCDF.nt/3 - zeroCounts[2]); //Total counts used = (1/3 of time being measured) - number of zeros subtracted
-		dualCDF2 += (double)fluxCDF.dualCounts[iBin]/(fluxCDF.nt/3 - zeroCounts[2]); 
+		dualCDF1 += (double)fluxCDF.oldDualCounts[iBin]/(fluxCDF.nT/3 - zeroCounts[2]); //Total counts used = (1/3 of time being measured) - number of zeros subtracted
+		dualCDF2 += (double)fluxCDF.dualCounts[iBin]/(fluxCDF.nT/3 - zeroCounts[2]); 
 		if(fabs(cdf1-cdf2)>ksStat){
 			ksStat = fabs(cdf1-cdf2);
 		}
@@ -521,6 +521,12 @@ int main(int argc, char *argv[]){
 			FLFile = fopen(fluxFileStr,"r");
 			KSTest(FLFile, nWE);
 			fclose(FLFile);
+			if(fluxCDF.dualKS >= DKSCRITICAL || fluxCDF.ksStat >= KSCRITICAL){
+				tauMax += tauMax;
+			}
+			if(fluxCDF.dualKS < DKSCRITICAL && fluxCDF.ksStat < KSCRITICAL){
+				nWE = tauMax;
+			}
 			if(DEBUGGING){
 				debugFile = fopen("Debug.txt","a");
 				fprintf(debugFile,"KS Recording \n");
@@ -639,6 +645,7 @@ int main(int argc, char *argv[]){
 		if(tauMax >= 1000){
 		if( (nWE+1) % (tauMax/1000) == 0 || nWE < 1000){
 		SIMFile = fopen(argv[1],"a");
+		fprintf(SIMFile,"tau = %i\n",nWE);
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
 			for(iBinContents=0;iBinContents < Reps.binContentsMax[iBin];iBinContents++){
@@ -653,6 +660,7 @@ int main(int argc, char *argv[]){
 		}}
 		else{
 		SIMFile = fopen(argv[1],"a");
+		fprintf(SIMFile,"tau = %i\n",nWE);
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
 			for(iBinContents=0;iBinContents < Reps.binContentsMax[iBin];iBinContents++){

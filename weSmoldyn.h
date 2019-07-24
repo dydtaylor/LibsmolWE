@@ -23,6 +23,7 @@
 
 #define NFLUXBINS 75
 #define KSCRITICAL .02
+#define DKSCRITICAL 0.3
 #define DEBUGGING 0
 #define STOPCOMMAND 1
 #define WEENABLE 1

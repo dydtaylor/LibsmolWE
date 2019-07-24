@@ -92,7 +92,6 @@ int findBin(simptr currentSim){
 		}
 	}
 	}
-		fclose(testfile);
 	};
 	if(!ROBINS){
 		nInBin = currentSim->mols->nl[0]; //Sets bin to # of monomers
