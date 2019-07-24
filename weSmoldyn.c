@@ -291,9 +291,9 @@ void getParams(FILE *DEFile, FILE *WEFile){
 }
 
 void KSTest(FILE *FluxFile, int nWE){
-	FILE *KSFile, *nzKSFile; //, *debugKS;
-	int iLine, iBin, nzCounter[2];
-	double binStep, cdf1, cdf2, ksStat, nzCDF1, nzCDF2, nonZeroKS;
+	FILE *KSFile, *dKSFile; //, *debugKS;
+	int iLine, iBin, zeroCounts[3];
+	double binStep, cdf1, cdf2, ksStat, dualCDF1, dualCDF2, dualKS;
 	int nLines = nWE;
 	double fluxVect[nWE];
 	
@@ -301,11 +301,14 @@ void KSTest(FILE *FluxFile, int nWE){
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		fluxCDF.binCounts[iBin] = 0;
 		fluxCDF.oldCounts[iBin] = 0;
+		fluxCDF.dualCounts[iBin] = 0;
+		fluxCDF.oldDualCounts[iBin] = 0;
 	}
 
 	//load flux
-	nzCounter[0] = 0; //Necessary parameter for normalizing the non-zero CDF.
-	nzCounter[1] = 0;
+	zeroCounts[0] = 0; //Necessary parameter for normalizing the non-zero CDF.
+	zeroCounts[1] = 0;
+	zeroCoutns[2] = 0;
 	fluxCDF.fluxMax = 0;
 	for(iLine = 0; iLine < nLines; iLine++){
 		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
@@ -326,9 +329,9 @@ void KSTest(FILE *FluxFile, int nWE){
 		for(iBin=0;iBin<NFLUXBINS;iBin++){
 			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.oldCounts[iBin]++;
-				if(fluxVect[iLine]>0){
-					fluxCDF.oldNonZeroBC[iBin]++;
-					nzCounter[0]++;
+				fluxCDF.oldDualCounts[iBin]++;
+				if(fluxVect[iLine]==0){
+					zeroCounts[0]++;
 				}
 			}
 		}
@@ -338,31 +341,40 @@ void KSTest(FILE *FluxFile, int nWE){
 		for(iBin=0;iBin<NFLUXBINS;iBin++){
 			if(fluxVect[iLine]>fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.binCounts[iBin]++;
-				if(fluxVect[iLine]>0){
-					fluxCDF.nonZeroBC[iBin]++;
-					nzCounter[1]++;
+				fluxCDF.dualCounts[iBin]++;
+				if(fluxVect[iLine]==0){
+					zeroCounts[1]++;
 				}
 			}
 		}
 	}
 	
+	//Determine which of the inspected CDFs has the least amount of zeros, then adjust the bincounts to remove those zeros.
+	if(zeroCounts[0] >= zeroCounts[1]){
+		zeroCounts[2] = zeroCounts[1];
+	}
+	if(zeroCounts[0]<zeroCounts[1]){
+		zeroCounts[2] = zeroCounts[0];
+	}
+	fluxCDF.dualCounts[0] -= zeroCounts[2];
+	fluxCDF.oldDualCounts -= zeroCounts[2];
 	//Perform KS Test
 	cdf1 = 0;
 	cdf2 = 0;
-	nzCDF1 = 0;
-	nzCDF2 = 0;
+	dualCDF1 = 0;
+	dualCDF2 = 0;
 	ksStat = 0;
-	nonZeroKS = 0;
+	dualKS = 0;
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		cdf1 += (double)fluxCDF.oldCounts[iBin]/(fluxCDF.nT/3);
 		cdf2 += (double)fluxCDF.binCounts[iBin]/(fluxCDF.nT/3);
-		nzCDF1 += (double)fluxCDF.oldNonZeroBC[iBin]/nzCounter[0];
-		nzCDF2 += (double)fluxCDF.nonZeroBC[iBin]/nzCounter[1];
+		dualCDF1 += (double)fluxCDF.oldDualCounts[iBin]/(fluxCDF.nt/3 - zeroCounts[2]); //Total counts used = (1/3 of time being measured) - number of zeros subtracted
+		dualCDF2 += (double)fluxCDF.dualCounts[iBin]/(fluxCDF.nt/3 - zeroCounts[2]); 
 		if(fabs(cdf1-cdf2)>ksStat){
 			ksStat = fabs(cdf1-cdf2);
 		}
-		if(fabs(nzCDF1-nzCDF2)>nonZeroKS){
-			nonZeroKS = fabs(nzCDF1-nzCDF2);
+		if(fabs(dualCDF1-dualCDF2)>dualKS){
+			dualKS = fabs(dualCDF1-dualCDF2);
 		}
 	}
 	
@@ -378,20 +390,20 @@ void KSTest(FILE *FluxFile, int nWE){
 	fprintf(KSFile, "\n ksStat: %E \n nT %i \n",ksStat, fluxCDF.nT);
 	fclose(KSFile);
 	
-	nzKSFile = fopen("ksNonZero.txt","a");
-	fprintf(nzKSFile, "maxFlux = %E \n", fluxCDF.fluxMax);
+	dKSFile = fopen("dualKS.txt","a");
+	fprintf(dKSFile, "maxFlux = %E \n", fluxCDF.fluxMax);
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
-		fprintf(nzKSFile, "%i ", fluxCDF.nonZeroBC[iBin]);
+		fprintf(dKSFile, "%i ", fluxCDF.dualCounts[iBin]);
 	}
-	fprintf(nzKSFile, "\n");
+	fprintf(dKSFile, "\n");
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
-		fprintf(nzKSFile, "%i ", fluxCDF.oldNonZeroBC[iBin]);
+		fprintf(dKSFile, "%i ", fluxCDF.oldDualCounts[iBin]);
 	}
-	fprintf(nzKSFile, "\n ksStat: %E \n nT %i \n \n nzCounts %i",nonZeroKS, fluxCDF.nT,nzCounter[0]+nzCounter[1]);
-	fclose(nzKSFile);
+	fprintf(dKSFile, "\n dksStat: %E \n nT %i \n \n Zeros counted (removed): %i %i (%i)",dualKS, fluxCDF.nT, zeroCounts[0],zeroCounts[1],zeroCounts[2]);
+	fclose(dKSFile);
 	
 	fluxCDF.ksStat = ksStat;
-	fluxCDF.nonZeroKS = nonZeroKS;
+	fluxCDF.dualKS = dualKS;
 	fluxCDF.nT *= 2;
 	return;
 }

@@ -67,11 +67,11 @@ struct fluxCounts{
 	double fluxMax;
 	double binDefs[NFLUXBINS+1];
 	double ksStat;
-	double nonZeroKS;
+	double dualKS;
 	int binCounts[NFLUXBINS];
 	int oldCounts[NFLUXBINS];
-	int nonZeroBC[NFLUXBINS];
-	int oldNonZeroBC[NFLUXBINS];
+	int dualCounts[NFLUXBINS];
+	int oldDualCounts[NFLUXBINS];
 	int nT;
 };
 
