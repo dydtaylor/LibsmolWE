@@ -362,7 +362,7 @@ void KSTest(FILE *FluxFile, int nWE){
 			ksStat = fabs(cdf1-cdf2);
 		}
 		if(fabs(nzCDF1-nzCDF2)>nonZeroKS){
-			nonZeroKS = fabs(nzCDF1-nzCDF2)
+			nonZeroKS = fabs(nzCDF1-nzCDF2);
 		}
 	}
 	
@@ -401,8 +401,8 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, tauOrig, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit; //tauQuarter omitted
-	double fluxAtStep, binWeight, clockDouble[4];
+	int tauMax, tauOrig, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3]; //tauQuarter omitted
+	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[4];
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
@@ -417,8 +417,7 @@ int main(int argc, char *argv[]){
 	getParams(DEFile, WEFile);
 	
 	//Defining variables for continuous dimer counting, gives more data points for comparing monomerization fraction
-	int mCounts[3];
-	double  mCountsWeighted[3]; 
+	
 	//These files will each give the total monomers, dimers, and either all "time" elapsed for all sims or all weight measured across
 	for(iDimer = 0; iDimer < 3; iDimer++){
 		mCounts[iDimer] = 0;
@@ -605,7 +604,7 @@ int main(int argc, char *argv[]){
 				fclose(debugFile);
 						 }*/
 			start[2] = clock();
-			dynamicsEngine(Reps.sims[iSim], mCounts, mCountsWeighted, nWE, iSim);
+			dynamicsEngine(Reps.sims[iSim]);
 			stop[2] = clock();
 			clockDouble[2]+=(double)(stop[2]-start[2])/CLOCKS_PER_SEC;
 			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);

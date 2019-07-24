@@ -68,21 +68,12 @@ void initialDist(int nInit){
 }
 
 
-void dynamicsEngine(simptr currentSim, int mCounts[], double mCountsWeighted[], int nWE, int iSim){
+void dynamicsEngine(simptr currentSim){
 	smolUpdateSim(currentSim);
 	for(int i = 0; i < paramsWe.tau; i++){
 	smolRunTimeStep(currentSim);
-		if(MONOFRACEACHDT){
-			if(nWE > paramsWe.tauMax /2){
-				mCounts[0] += smolGetMoleculeCount(currentSim, "A", MSall);
-				mCounts[1] += smolGetMoleculeCount(currentSim, "B", MSall);
-				mCounts[2] += 1;
-				mCountsWeighted[0] += (double) smolGetMoleculeCount(currentSim,"A", MSall) * Reps.weights[iSim];
-				mCountsWeighted[1] += (double) smolGetMoleculeCount(currentSim,"B", MSall) * Reps.weights[iSim];
-				mCountsWeighted[2] += Reps.weights[iSim];
 	}
-	}
-	}
+	
 }
 
 int findBin(simptr currentSim){
@@ -96,10 +87,12 @@ int findBin(simptr currentSim){
 		molX = currentSim->mols->live[nMolList][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[nMolList][nMol]->pos[1];
 		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
+
 			nInBin++;
 		}
 	}
 	}
+		fclose(testfile);
 	};
 	if(!ROBINS){
 		nInBin = currentSim->mols->nl[0]; //Sets bin to # of monomers
