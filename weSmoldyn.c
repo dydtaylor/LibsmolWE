@@ -310,6 +310,9 @@ void KSTest(FILE *FluxFile, int nWE){
 	zeroCounts[1] = 0;
 	zeroCounts[2] = 0;
 	fluxCDF.fluxMax = 0;
+	if(nWE>500){
+		printf("statement");
+	}
 	for(iLine = 0; iLine < nLines; iLine++){
 		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
 		if(iLine> nLines/3 && fluxVect[iLine]>fluxCDF.fluxMax){
@@ -320,6 +323,7 @@ void KSTest(FILE *FluxFile, int nWE){
 	//Create new Bin Defs
 	binStep = fluxCDF.fluxMax / NFLUXBINS;
 	fluxCDF.binDefs[0] = 0;
+	if(fluxCDF.fluxMax > 0){
 	for(iBin = 1; iBin <= NFLUXBINS; iBin++){
 		fluxCDF.binDefs[iBin] = (double)iBin*binStep;
 	}
@@ -330,10 +334,13 @@ void KSTest(FILE *FluxFile, int nWE){
 			if(fluxVect[iLine]>=fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.oldCounts[iBin]++;
 				fluxCDF.oldDualCounts[iBin]++;
-				if(fluxVect[iLine]==0){
-					zeroCounts[0]++;
-				}
 			}
+		}
+		if(fluxVect[iLine]==0){
+					zeroCounts[0]++;
+		}
+		if(zeroCounts[0] > iLine){
+			printf("statement");
 		}
 	}
 	
@@ -342,11 +349,12 @@ void KSTest(FILE *FluxFile, int nWE){
 			if(fluxVect[iLine]>=fluxCDF.binDefs[iBin] && fluxVect[iLine]<fluxCDF.binDefs[iBin+1]){
 				fluxCDF.binCounts[iBin]++;
 				fluxCDF.dualCounts[iBin]++;
-				if(fluxVect[iLine]==0){
-					zeroCounts[1]++;
-				}
 			}
 		}
+				
+		if(fluxVect[iLine]==0){
+					zeroCounts[1]++;
+		}		
 	}
 	
 	//Determine which of the inspected CDFs has the least amount of zeros, then adjust the bincounts to remove those zeros.
@@ -377,6 +385,15 @@ void KSTest(FILE *FluxFile, int nWE){
 			dualKS = fabs(dualCDF1-dualCDF2);
 		}
 	}
+		if(zeroCounts[2] >= 1*nLines/3){
+			ksStat = 2;
+			dualKS = 2;
+		}
+	}
+	else{
+		dualKS = 2;
+		ksStat = 2;
+	}
 	
 	KSFile = fopen("ksOut.txt", "a");
 	fprintf(KSFile, "maxFlux = %E \n", fluxCDF.fluxMax);
@@ -399,8 +416,10 @@ void KSTest(FILE *FluxFile, int nWE){
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		fprintf(dKSFile, "%i ", fluxCDF.oldDualCounts[iBin]);
 	}
-	fprintf(dKSFile, "\n dksStat: %E \n nT %i \n \n Zeros counted (removed): %i %i (%i)",dualKS, fluxCDF.nT, zeroCounts[0],zeroCounts[1],zeroCounts[2]);
+	fprintf(dKSFile, "\n dksStat: %E \n nT %i \n \n Zeros counted (removed): %i %i (%i)\n",dualKS, fluxCDF.nT, zeroCounts[0],zeroCounts[1],zeroCounts[2]);
 	fclose(dKSFile);
+	
+
 	
 	fluxCDF.ksStat = ksStat;
 	fluxCDF.dualKS = dualKS;
@@ -413,7 +432,7 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, tauOrig, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3]; //tauQuarter omitted
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3]; //tauQuarter omitted
 	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[4];
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
@@ -483,7 +502,6 @@ int main(int argc, char *argv[]){
 
 	start[3] = clock();
 	}
-	tauOrig = tauMax;
 	//Simulation Loop
 	for(nWE = 0; nWE < tauMax; nWE++){
 		
