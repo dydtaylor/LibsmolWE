@@ -310,9 +310,6 @@ void KSTest(FILE *FluxFile, int nWE){
 	zeroCounts[1] = 0;
 	zeroCounts[2] = 0;
 	fluxCDF.fluxMax = 0;
-	if(nWE>500){
-		printf("statement");
-	}
 	for(iLine = 0; iLine < nLines; iLine++){
 		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
 		if(iLine> nLines/3 && fluxVect[iLine]>fluxCDF.fluxMax){
@@ -338,9 +335,6 @@ void KSTest(FILE *FluxFile, int nWE){
 		}
 		if(fluxVect[iLine]==0){
 					zeroCounts[0]++;
-		}
-		if(zeroCounts[0] > iLine){
-			printf("statement");
 		}
 	}
 	
