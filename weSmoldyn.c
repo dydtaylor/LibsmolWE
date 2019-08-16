@@ -296,7 +296,9 @@ void KSTest(FILE *FluxFile, int nWE){
 	double binStep, cdf1, cdf2, ksStat, dualCDF1, dualCDF2, dualKS;
 	int nLines = nWE;
 	double fluxVect[nWE];
-	
+	/* This section measures the KS by creating a histogram of the fluxes, using the histogram to measure the cdfs,
+	then 
+	*/
 	//Clear previous binCounts
 	for(iBin = 0; iBin < NFLUXBINS; iBin++){
 		fluxCDF.binCounts[iBin] = 0;
@@ -310,6 +312,7 @@ void KSTest(FILE *FluxFile, int nWE){
 	zeroCounts[1] = 0;
 	zeroCounts[2] = 0;
 	fluxCDF.fluxMax = 0;
+
 	for(iLine = 0; iLine < nLines; iLine++){
 		fscanf(FluxFile, "%lE\n",&fluxVect[iLine]);
 		if(iLine> nLines/3 && fluxVect[iLine]>fluxCDF.fluxMax){
@@ -335,6 +338,9 @@ void KSTest(FILE *FluxFile, int nWE){
 		}
 		if(fluxVect[iLine]==0){
 					zeroCounts[0]++;
+		}
+		if(zeroCounts[0] > iLine){
+			printf("statement");
 		}
 	}
 	
@@ -381,6 +387,9 @@ void KSTest(FILE *FluxFile, int nWE){
 	}
 		if(zeroCounts[2] >= 1*nLines/3){
 			ksStat = 2;
+			dualKS = 2;
+		}
+		if(fabs(zeroCounts[1]-nLines/3) < NNZMIN || fabs(zeroCounts[0]-nLines/3) < NNZMIN){
 			dualKS = 2;
 		}
 	}
@@ -533,11 +542,14 @@ int main(int argc, char *argv[]){
 			FLFile = fopen(fluxFileStr,"r");
 			KSTest(FLFile, nWE);
 			fclose(FLFile);
+			if(!FIXEDTIME){
 			if(fluxCDF.dualKS >= DKSCRITICAL || fluxCDF.ksStat >= KSCRITICAL){
 				tauMax += tauMax;
 			}
+			
 			if(fluxCDF.dualKS < DKSCRITICAL && fluxCDF.ksStat < KSCRITICAL){
 				nWE = tauMax;
+			}
 			}
 			if(DEBUGGING){
 				debugFile = fopen("Debug.txt","a");

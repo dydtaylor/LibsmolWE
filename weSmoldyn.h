@@ -21,14 +21,16 @@
 
 #define SMOLTIMEMAX 10000
 
-#define NFLUXBINS 75
+#define NFLUXBINS 150
 #define KSCRITICAL .02
 #define DKSCRITICAL 0.3
-#define DEBUGGING 0
+#define DEBUGGING 0 //0 disables debugging text output.
 #define STOPCOMMAND 1
-#define WEENABLE 1
-#define ROBINS 1
-#define MONOFRACEACHDT 0
+#define WEENABLE 1 //Ignores WE and only runs Smoldyn dynamics
+#define ROBINS 1 // Specifies WE binning is based on N inside the ROI order parameter
+#define MONOFRACEACHDT 0 //Determines frequency of measuring monomerization fraction
+#define FIXEDTIME 0
+#define NNZMIN 2000 //DKS Test non-zero min for 
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
