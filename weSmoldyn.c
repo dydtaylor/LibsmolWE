@@ -20,7 +20,7 @@ void splitMerge(int nWE){
 	double p0; /*Doubles giving the merge probabilities*/
 	//unsigned int binConPrev[BINCONTENTSMAXMAX][NBINSMAX];
 	/*Merging loop*/
-	for(mergeBin = binMin; mergeBin <binMax; mergeBin++){
+	for(mergeBin = binMin; mergeBin <=binMax; mergeBin++){
 		/*Initialize the merge indices with the first 2 indices stored in appropriate BinContents row*/
 
 		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin)){ // JUN COMMENT: What is the second condition for?
@@ -430,6 +430,37 @@ void KSTest(FILE *FluxFile, int nWE){
 	return;
 }
 
+void bin1Entropy(int nWE){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Measures entropy and number of splits occurring in bin1 (bin next to flux bin at time of writing)
+!		Method:
+!			Gathers number of splits from ending replicas - number of current replicas. Calculates entropy through
+!			S = - sum(pi * log(pi)), except to keep loops minimized the calculation is rewritten as
+!			S = - 1/wT * sum(wi * log(wi)) + log(wT), where pi = wi/wT, wT = sum(wi), and wi is the weight of a rep.
+!			After calculation appends the timestep, number of splits, and entropy to a text file.
+!			nSplits < 0 means that there will be merging rather than splitting in the next split merge step
+!---------------------------------------------------------------------------------------------------------------------
+*/
+	FILE *binFile;
+	int nReps,nSplits,iReps;
+	double entropy, relativeEntropy, relativeWeightTotal, iWeight;
+	binFile = fopen("bin1.txt","a");
+	
+	nReps = Reps.binContentsMax[1];
+	relativeWeightTotal = 0;
+	relativeEntropy = 0;
+	for(iReps = 0; iReps < nReps; iReps++){
+		iWeight = Reps.weights[Reps.binContents[iReps][1]];
+		relativeWeightTotal+= iWeight;
+		relativeEntropy+= - iWeight * log(iWeight);
+	}
+	entropy = relativeEntropy/relativeWeightTotal + log(relativeWeightTotal);
+	nSplits = paramsWe.repsPerBin - nReps;
+	fprintf(binFile,"%i, %i, %E\n",nWE, nSplits,entropy);
+	fclose(binFile);
+}
 
 int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
@@ -668,7 +699,8 @@ int main(int argc, char *argv[]){
 		//Record weight distribution among bins
 		if(tauMax >= 1000){
 		if( (nWE+1) % (tauMax/1000) == 0 || nWE < 1000){
-		SIMFile = fopen(argv[1],"a");
+			bin1Entropy(nWE);
+		SIMFile = fopen(argv[1],"a");	
 		fprintf(SIMFile,"tau = %i\n",nWE);
 		for(iBin = 0; iBin < Reps.nBins; iBin++){
 			binWeight = 0;
@@ -683,6 +715,7 @@ int main(int argc, char *argv[]){
 		
 		}}
 		else{
+			bin1Entropy(nWE);
 		SIMFile = fopen(argv[1],"a");
 		fprintf(SIMFile,"tau = %i\n",nWE);
 		for(iBin = 0; iBin < Reps.nBins; iBin++){

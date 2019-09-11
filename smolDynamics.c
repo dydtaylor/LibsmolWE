@@ -1,4 +1,23 @@
 void initialDist(int nInit){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!	Description:
+!		This function creates the initial distribution of smoldyn replicas. Each replica is created in a monomer-only
+!		configuration where the monomers are distributed randomly throughout the system.
+!	Method:
+!		1.Create several local variables for dynamics parameters, reaction product states, and molecule string labels
+!			reformatted for smoldyn functions
+!		2.For the empty simptrs in Reps that will be initialized, create new Smoldyn sims. Each Sim is created by:
+!			a: Create new sim, set the random seed, disable graphics, set sim times
+!			b: Create list to store molecules in, define the molecules, which list they belong in, set their Diffusion
+!				and specify the maximum number of molecules. If reactions are enabled, we do this for dimers as well
+!				and then add the reaction in and set the reaction rates. Afterwards we place nPart monomers randomly
+!			c: Define a surface for boundaries of the system. Specify reflective boundary conditions.
+!			d: Define a surface and compartment for the region of interest. Neither directly interacts with the mols
+!			e: Specify that simulations should terminate once all molecules evacuate from the RoI
+!		
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	int jSim;
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
@@ -25,7 +44,7 @@ void initialDist(int nInit){
 		Reps.sims[jSim] = smolNewSim(2, lowBounds,highBounds);
 		smolSetRandomSeed(Reps.sims[jSim],genrand_int31());
 		smolSetGraphicsParams(Reps.sims[jSim], "none", 1, 0);
-		smolSetSimTimes(Reps.sims[jSim],0,10000,paramsDe.dt);
+		smolSetSimTimes(Reps.sims[jSim],0,SMOLTIMEMAX,paramsDe.dt);
 		
 		smolAddMolList(Reps.sims[jSim],"mList");
 		smolAddSpecies(Reps.sims[jSim],monomer,"mList");
@@ -49,10 +68,6 @@ void initialDist(int nInit){
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+y", topRightCornerRect);
 		smolSetSurfaceAction(Reps.sims[jSim], "bounds", PFboth, "all", MSall, SAreflect);
 		
-		if(STOPCOMMAND){
-		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt all = 0 roiComp stop");
-		}
-		
 		//ROI Surface + compartment
 		smolAddSurface(Reps.sims[jSim], "roi");
 		smolAddPanel(Reps.sims[jSim],"roi", PSsph, NULL, "+0", roiParams);
@@ -60,8 +75,11 @@ void initialDist(int nInit){
 		smolAddCompartment(Reps.sims[jSim],"roiComp");
 		smolAddCompartmentSurface(Reps.sims[jSim],"roiComp","roi");
 		smolAddCompartmentPoint(Reps.sims[jSim],"roiComp",insideRoi);
-		smolSetPartitions(Reps.sims[jSim],"molperbox",20);
 		smolUpdateSim(Reps.sims[jSim]);
+		
+		if(STOPCOMMAND){
+		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt all = 0 roiComp stop");
+		}
 		
 		//Reps.sims[jSim]->logfile = nulldev;
 	}
@@ -69,7 +87,15 @@ void initialDist(int nInit){
 
 
 void dynamicsEngine(simptr currentSim){
-	smolUpdateSim(currentSim);
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			This function executes all of the dynamics for a single simptr through an entire tau step.
+!		Method:
+!			Receives a simptr as input. Runs a single smoldyn timestep on that sim for each tau.
+!---------------------------------------------------------------------------------------------------------------------
+*/
+	//smolUpdateSim(currentSim);
 	for(int i = 0; i < paramsWe.tau; i++){
 	smolRunTimeStep(currentSim);
 	}
@@ -77,10 +103,20 @@ void dynamicsEngine(simptr currentSim){
 }
 
 int findBin(simptr currentSim){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			This examines a simptr then determines the bin it should be in based on the order parameter used
+!		Method:
+!			If ROBINS macro is enabled, it loops through all molecule lists and increments the bin every time it finds
+!			a molecule inside the RoI radius (x^2 + y^2 < R^2). If not using ROBINS, the bin out is the number of live
+!			monomers.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	//Finds number of molecules inside the ROI by inspecting each molecule's location
-	int nInBin, nMol, nMolList;
+	int binOut, nMol, nMolList;
 	double molX, molY;
-	nInBin = 0;
+	binOut = 0;
 	if(ROBINS){
 	for(nMolList = 0; nMolList < currentSim->mols->nlist; nMolList++){ 
 	for(nMol = 0; nMol < currentSim->mols->nl[nMolList]; nMol++){
@@ -88,18 +124,26 @@ int findBin(simptr currentSim){
 		molY = currentSim->mols->live[nMolList][nMol]->pos[1];
 		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
 
-			nInBin++;
+			binOut++;
 		}
 	}
 	}
 	};
 	if(!ROBINS){
-		nInBin = currentSim->mols->nl[0]; //Sets bin to # of monomers
+		binOut = currentSim->mols->nl[0]; //Sets bin to # of monomers
 	}
-	return nInBin;
+	return binOut;
 }
 
 void freeAllSims(){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			This frees all smoldyn simulations.
+!		Method:
+!			Executes a loop of "smolFreeSim" for each sim currently being used.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	int jSim;
 	for(jSim = 0; jSim <=Reps.iSimMax; jSim++){
 	smolFreeSim(Reps.sims[jSim]);
@@ -108,9 +152,14 @@ void freeAllSims(){
 
 void copySim1(int simIn, int simOut){
 
-	/*
-	Takes simIn, reads molecule locations from the sim, then makes a new sim with molecules at the same locations. Most parameters / lines of code are identical to the sim made through initialDist
-	*/
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			When a sim is to be copied (split) this creates a new sim
+!		Method:
+!			Receives a simptr as input. Runs a single smoldyn timestep on that sim for each tau.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	
 	int nList, nMol;
 	//FILE *nulldev = fopen(NULLDEVICE, "w");
