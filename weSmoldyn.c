@@ -462,6 +462,52 @@ void bin1Entropy(int nWE){
 	fclose(binFile);
 }
 
+void evacuatedParticles(){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Measures particle locations + replica weights for systems in flux bin
+!		Method:
+!			For each sim in the flux bin, write its weight + monomer locations to 1 file and weight + dimer locations
+!			to another file.
+!				1. Identify sims in flux bin
+!				2. For each sim, write its weight to monomer + dimer file
+!				3. For both lists of molecules, loop through all live molecules, writing x+y pos to same line of files
+!				4. After writing positions to file, write new line character
+!---------------------------------------------------------------------------------------------------------------------
+*/
+	FILE *monomersFile, *dimersFile;
+	int iBC, nList, iSim, nMol;
+	int nFlux = Reps.binContentsMax[paramsWe.fluxBin];
+	if(nFlux>0){
+	monomersFile = fopen("monomerLocs.txt","a");
+	dimersFile = fopen("dimerLocs.txt","a");
+		for(iBC = nFlux -1; iBC >=0; iBC--){ //Loop through the replicas
+			iSim = Reps.binContents[iBC][paramsWe.fluxBin];
+			fprintf(monomersFile,"%e, ", Reps.weights[iSim]);
+			fprintf(dimersFile,"%e, ",Reps.weights[iSim]);
+				for(nList = 0; nList < Reps.sims[iSim]->mols->nlist;nList++){
+					if(nList == 0){
+						for(nMol = 0; nMol < Reps.sims[iSim]->mols->nl[nList];nMol++){
+							fprintf(monomersFile,"%e, %e, ",Reps.sims[iSim]->mols->live[nList][nMol]->pos[0],Reps.sims[iSim]->mols->live[nList][nMol]->pos[1]);
+						}
+						fprintf(monomersFile,"\n");
+					}
+					if(nList ==1){
+						for(nMol = 0; nMol < Reps.sims[iSim]->mols->nl[nList];nMol++){
+							fprintf(dimersFile,"%e, %e, ",Reps.sims[iSim]->mols->live[nList][nMol]->pos[0],Reps.sims[iSim]->mols->live[nList][nMol]->pos[1]);
+						}
+						fprintf(dimersFile,"\n");
+					}
+				}
+		}
+		fclose(monomersFile);
+		fclose(dimersFile);
+	}
+	
+	
+}
+
 int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
@@ -547,6 +593,7 @@ int main(int argc, char *argv[]){
 		}
 		//Flux Recording
 		if(paramsWe.fluxBin >= 0){
+			evacuatedParticles();
 		FLFile = fopen(fluxFileStr,"a");
 		fluxAtStep = fluxes();
 		fprintf(FLFile, "%E\n", fluxAtStep);

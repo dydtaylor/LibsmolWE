@@ -30,7 +30,7 @@
 #define ROBINS 1 // Specifies WE binning is based on N inside the ROI order parameter
 #define MONOFRACEACHDT 0 //Determines frequency of measuring monomerization fraction
 #define FIXEDTIME 0
-#define NNZMIN 2000 //DKS Test non-zero min for 
+#define NNZMIN 500 //DKS Test non-zero min for 
 
 struct paramsWeightedEnsemble{
 	unsigned int tau; //In integer units of dt: e.g. if dt=.01, tau=.1, then this value should be .1/.01 = 10;
