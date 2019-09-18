@@ -1,11 +1,12 @@
 #!/bin/bash
 
+./makePubs.pl $1
 cd ..
 
-RUNPATH=/data/users/robertbt/WELibsmolData
+RUNPATH=/pub/robertbt/WELibsmolData
 
-make
+#make
 mkdir $RUNPATH/$1
-./makePubs.pl $1
 
-cp weSmoldyn WEParams.txt dynamicsParams.txt ISEED scripts/singleHPCRun.pub $RUNPATH/$1
+./seedchange
+cp weSmoldyn WEParams.txt dynamicsParams.txt ISEED scripts/pubs/$1.pub $RUNPATH/$1

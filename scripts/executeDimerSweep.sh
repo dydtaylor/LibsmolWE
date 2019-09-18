@@ -1,10 +1,13 @@
 #!/bin/bash
-cd /data/users/robertbt/WELibsmolData
-for bindR in .0000001 .0000002 .0000005 .000001 .000002 .000005 .00001 .00002 .00005 .0001 .0002 .0005 .001 .002 .005 .01 .02;
-for unbindK in 1 2 5
+cd /pub/robertbt/WELibsmolData
+for bindR in 0.1 #$(seq .1 .1 1.0);
 do
 
-cd $1bind${bindR}unbind
+for unbindK in .1 .2 .5 1 2 5 10 20 50 100 200 500 1000 2000 5000 10000 #20000 50000 100000 200000 500000 1000000 2000000 5000000 10000000 20000000 50000000 100000000 200000000 500000000
+do 
+
+cd $1bind${bindR}unbind${unbindK}
 qsub ./$1bind${bindR}unbind${unbindK}.pub
 cd ..
+done
 done
