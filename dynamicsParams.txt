@@ -1,9 +1,9 @@
 dt		.000001
-worldL	3
+worldL	1.7
 roiR	1
 difM	1
 difD	0.5
 bindR	0.1
 unbindK	1000
-nPart	10
+nPart	23
 reactBit 0

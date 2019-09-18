@@ -2,12 +2,40 @@
 #include "smolDynamics.c"
 
 void splitMerge(int nWE){
-	/*This function is largely unchanged from the OU Weighted Ensemble.
-	Main difference is in the splitting loop, copySim was written to deal with smoldyn data structures
-	*/
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			This function performs WE splitting and merging
+!		Notes:
+!			iSimMax > 0, so when being used as an index we deduct 1 from its value.
+!		Method:
+!			1. Define variables for tracking indices. dummyInd + rowCol + mergeInd + keptInd + splitInd. Fairly useful
+!				for avoiding very extended index terms (e.g. Reps.Sims[Reps.binContents[Reps.iSimMax][mergeBin]]) as
+!				well as some looping variables
+!			2. Begin a loop through all bins to check for merging. While a bin has more replicas inside than the mTarg
+!				do the following:
+!				a. Loop through the replicas in the bin to find the two replicas with the smallest WE weights.
+!				b. Determine which index should be kept probabilistically, determined by relative weights. Update
+!					dummy indices.
+!				c. Combine the weights from both indices into the kept index
+!				d. Replace deleted index with another index and update the table of contents matrix (binContents)
+!					i. Find iSimMax in binContents, replace its index with the index of the deleted replica
+!					ii. Free the sim of the deleted replica, replace the pointer+weight+bin with iSimMax's
+!					iii. Place NAN / NULL values where iSimMax's old location was, decrease iSimMax by 1
+!					iv. In the BC matrix for the merging bin, replace the deleted index with the index at the end
+!						take the index at the end and set to NAN, decrease BC max for the bin.
+!			3. Begin a loop through all bins to check for splitting. While a bin has less replicas inside than mTarg
+!				but also > 0 replicas, do the following:
+!				a. Loop through all replicas in the bin to find the replica with the greateset WE weight.
+!				b. Execute copySim1, copying the greatest weight to the first empty simptr in Reps.sims
+!				c. Halve the weight of the split sim, copy its weight + bin location to appropriate Reps.weights and 
+!					Reps.binLocs
+!				d. Add the new index to the BC matrix, increment BC max + iSimMax to account for extra replica
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	int binMin = 0;
 	int binMax = Reps.nBins;
-	unsigned int dummyInd;/*Just a dummy index that will hold the current index location in both split and merge loop*/
+	unsigned int dummyInd;/*Dummy index that will hold an index location in both split and merge loop*/
 	int rowCol[3]; /* YET ANOTHER dummy that tells me which columns in the bincontents row will be combined together, with the third element giving the deleted column*/
 	int mergeInd[2]; /* Array containing indices of 2 elements to be merged*/
 	int keptInd[2]; /*Previous array, reordered s.t. the first index is the one that will be kept*/
@@ -23,7 +51,7 @@ void splitMerge(int nWE){
 	for(mergeBin = binMin; mergeBin <=binMax; mergeBin++){
 		/*Initialize the merge indices with the first 2 indices stored in appropriate BinContents row*/
 
-		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin)){ // JUN COMMENT: What is the second condition for?
+		while((Reps.binContentsMax[mergeBin]>paramsWe.repsPerBin)){
 			mergeInd[0] = Reps.binContents[0][mergeBin];
 			mergeInd[1] = Reps.binContents[1][mergeBin];
 			rowCol[0] = 0;
@@ -55,6 +83,7 @@ void splitMerge(int nWE){
 
 			/*Decide which index to keep.*/
 			if(Reps.weights[mergeInd[0]]==0 && Reps.weights[mergeInd[1]]==0){
+				//Occaisionally, for bins with very low total weight, multiple replicas will have weight 0.
 				p0 = 0.5;
 			}
 			else{
@@ -157,6 +186,15 @@ void splitMerge(int nWE){
 }
 
 double fluxes(){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Measures weight inside flux bin, frees sims in flux bin, readjusts weights of all other sims to sum to 1
+!		Method:
+!			Counts number of replicas in flux bin. If there is at least one, do the following:
+!				1. 
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	double fluxOut = 0;
 	double weightSum;
 	int jWeight, iReps, simAReplace, iSim, simA;

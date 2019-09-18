@@ -68,6 +68,7 @@ void initialDist(int nInit){
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+y", topRightCornerRect);
 		smolSetSurfaceAction(Reps.sims[jSim], "bounds", PFboth, "all", MSall, SAreflect);
 		
+		
 		//ROI Surface + compartment
 		smolAddSurface(Reps.sims[jSim], "roi");
 		smolAddPanel(Reps.sims[jSim],"roi", PSsph, NULL, "+0", roiParams);
@@ -157,7 +158,10 @@ void copySim1(int simIn, int simOut){
 !		Description:
 !			When a sim is to be copied (split) this creates a new sim
 !		Method:
-!			Receives a simptr as input. Runs a single smoldyn timestep on that sim for each tau.
+!			This functionally is very similar to the function initialDist. There are two key differences:
+!			1. Rather than creating multiple sims, this only creates one sim.
+!			2. The molecule positions are not placed randomly, but at the same location as a previous replica's. The
+!			positions are copied from Reps.sims[simIn] and the output replica is Reps.sims[simOut].
 !---------------------------------------------------------------------------------------------------------------------
 */
 	
@@ -209,11 +213,11 @@ void copySim1(int simIn, int simOut){
 	}
 	
 	smolAddSurface(Reps.sims[simOut],"bounds");
-	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-x", topRightCornerRect);
-	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
-	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
-	smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
-	smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
+		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-x", topRightCornerRect);
+		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
+		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
+		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+y", topRightCornerRect);
+		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
 		
 	smolAddSurface(Reps.sims[simOut], "roi");
 	smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);

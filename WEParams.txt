@@ -1,5 +1,5 @@
-tau		1
-repsPerBin 	10
+tau		20
+repsPerBin 	100
 initialReps	10
 tauMax		600
 nBins		25
