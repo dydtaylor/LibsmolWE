@@ -15,9 +15,8 @@
     print FOOD << "EOF";
 #!/bin/bash
 #\$ -N $run_name
-#\$ -q rxn,free64,pub64
+#\$ -q bio,abio,free64,pub64
 #\$ -ckpt restart
-#\$ -r y
 #\$ -e $run_name.err
 #\$ -o $run_name.log
 cd /data/users/robertbt/WELibsmolData/$run_name
@@ -28,7 +27,7 @@ echo Time is `date`
 echo Directory is `pwd`
 # Run executable
 
-./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time &>/dev/null
+./weSmoldyn $run_name.Out $run_name.Flux $run_name.Err 0 $run_name.Time >>$run_name.smolOut
 echo Finished at `date`
 EOF
     close FOOD;
