@@ -54,6 +54,8 @@ struct paramsDynamicsEngine{
 	double unbindK;
 	int nPart;
 	int reactBit;
+	int reentryRateBit;
+	double reentryRate;
 } ;
 
 struct replicas{
@@ -148,6 +150,8 @@ double insideRoi[2];
 !		unbindK: Unbinding rate for dimers (1/nat time)
 !		nPart: Maximum number of monomers in the system (twice as many max dimers)
 !		reactBit: Enables binding / unbinding when set to 1, otherwise no rxns
+!		reentryRateBit: Enables / disables variable reentry rates.
+!		reentryRate: Rate for transmission through surface
 !	replicas: Contains information for indexing WE replicas, including weights,
 !		bin locations, and total number of replicas currently
 !		sims, weights, binLocs: Arrays of simpointers (pointers to an 

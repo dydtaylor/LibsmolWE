@@ -298,6 +298,8 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.unbindK);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.nPart);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.reactBit);
+	fscanf(DEFile, "%s %i",tmpStr,&paramsDe.reentryRateBit);
+	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.reentryRate);
 	//paramsWe.fluxBin = 0;
 	Reps.iSimMax = paramsWe.nInit;
 	fclose(DEFile);
