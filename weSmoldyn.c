@@ -300,6 +300,12 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.reactBit);
 	fscanf(DEFile, "%s %i",tmpStr,&paramsDe.reentryRateBit);
 	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.reentryRate);
+	fscanf(DEFile, "%s %i",tmpStr, &paramsDe.densityBit);
+	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.density);
+	
+	if(paramsDe.densityBit){
+		paramsDe.worldLength = sqrt((double)paramsDe.nPart/paramsDe.density);
+	}
 	//paramsWe.fluxBin = 0;
 	Reps.iSimMax = paramsWe.nInit;
 	fclose(DEFile);
@@ -552,7 +558,7 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3]; //tauQuarter omitted
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3],tauInit; //tauQuarter omitted
 	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[4];
 	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
 
@@ -579,6 +585,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	tauMax = paramsWe.tauMax;
+		tauInit = paramsWe.tauMax;
 	if(DEBUGGING){
 		debugFile = fopen("Debug.txt","a");
 		fprintf(debugFile,"Tau loops + flux vector made \n");
@@ -823,7 +830,7 @@ int main(int argc, char *argv[]){
 			fclose(debugFile);
 		}
 		
-		if(nWE > tauMax/2){
+		if(nWE > tauInit/2){
 			//mCountsFile = fopen("mCounts.txt","a");
 			//fprintf(mCountsFile, "%i, %i, %i \n", mCounts[0], mCounts[1], mCounts[2]);
 			//fclose(mCountsFile);

@@ -56,6 +56,8 @@ struct paramsDynamicsEngine{
 	int reactBit;
 	int reentryRateBit;
 	double reentryRate;
+	int densityBit;
+	double density;
 } ;
 
 struct replicas{
@@ -152,6 +154,8 @@ double insideRoi[2];
 !		reactBit: Enables binding / unbinding when set to 1, otherwise no rxns
 !		reentryRateBit: Enables / disables variable reentry rates.
 !		reentryRate: Rate for transmission through surface
+!		densityBit, density: Enables/disables using density + nPart to set 
+!		world length
 !	replicas: Contains information for indexing WE replicas, including weights,
 !		bin locations, and total number of replicas currently
 !		sims, weights, binLocs: Arrays of simpointers (pointers to an 

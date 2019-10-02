@@ -8,4 +8,6 @@ unbindK	1000
 nPart	20
 reactBit	0
 entryBit 1
-entryRate 0.05
+entryRate 0.20
+densityBit 0
+density 2
