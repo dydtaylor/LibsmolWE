@@ -302,6 +302,7 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.reentryRate);
 	fscanf(DEFile, "%s %i",tmpStr, &paramsDe.densityBit);
 	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.density);
+	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.monomerStart);
 	
 	if(paramsDe.densityBit){
 		paramsDe.worldLength = sqrt((double)paramsDe.nPart/paramsDe.density);
@@ -779,7 +780,7 @@ int main(int argc, char *argv[]){
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 			//Dimerization Fraction Recording
 			if(!MONOFRACEACHDT){
- 			if(nWE > tauMax/2){
+ 			if(nWE > tauInit/2){
 				mCounts[0] += Reps.sims[iSim]->mols->nl[0];
 				mCounts[1] += Reps.sims[iSim]->mols->nl[1];
 				mCounts[2]++;

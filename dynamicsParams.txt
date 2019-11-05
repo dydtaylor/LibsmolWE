@@ -6,8 +6,9 @@ difD	0.5
 bindR	0.1
 unbindK	1000
 nPart	20
-reactBit	0
-entryBit 1
-entryRate 0.20
+reactBit	1
+entryBit 0
+entryRate 0
 densityBit 0
 density 2
+monomerStart 0

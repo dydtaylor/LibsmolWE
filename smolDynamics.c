@@ -37,8 +37,6 @@ void initialDist(int nInit){
 	strcpy(unbindProducts[1],monomer);
 	outputStates[0] = MSsoln;
 	outputStates[1] = MSsoln;
-	
-	
 	for(jSim = 0; jSim < nInit; jSim++){
 		//Molecules + BCs
 		Reps.sims[jSim] = smolNewSim(2, lowBounds,highBounds);
@@ -59,8 +57,14 @@ void initialDist(int nInit){
 			smolSetReactionRate(Reps.sims[jSim], "binding", paramsDe.bindR, 1); //This line allows us to set the rate by the binding radius rather than kOn
 			smolAddReaction(Reps.sims[jSim], "unbinding", dimer, MSsoln, NULL , MSnone, 2,(const char**) unbindProducts, outputStates, paramsDe.unbindK);
 		}
-		
+		if(paramsDe.monomerStart>0 || paramsDe.reactBit==0 ){ //If we are starting only with monomers, then add only monomers to solution
 		smolAddSolutionMolecules(Reps.sims[jSim], monomer, paramsDe.nPart, lowBounds, highBounds);
+		} else{ //If we are starting only with dimers, then add N/2 dimers to solution
+			smolAddSolutionMolecules(Reps.sims[jSim], dimer, paramsDe.nPart/2, lowBounds, highBounds);
+			if(paramsDe.nPart % 2 !=0){//If there are an odd number of maximum possible monomers, add a single monomer to the solution
+				smolAddSolutionMolecules(Reps.sims[jSim],monomer, 1, lowBounds,highBounds);
+			}
+		}
 		smolAddSurface(Reps.sims[jSim], "bounds");
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-x", topRightCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
@@ -88,7 +92,6 @@ void initialDist(int nInit){
 		if(STOPCOMMAND){
 		smolAddCommandFromString(Reps.sims[jSim], "e ifincmpt all = 0 roiComp stop");
 		}
-		
 		//Reps.sims[jSim]->logfile = nulldev;
 	}
 }

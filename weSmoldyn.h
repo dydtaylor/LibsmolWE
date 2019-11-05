@@ -58,6 +58,7 @@ struct paramsDynamicsEngine{
 	double reentryRate;
 	int densityBit;
 	double density;
+	int monomerStart;
 } ;
 
 struct replicas{
@@ -156,6 +157,8 @@ double insideRoi[2];
 !		reentryRate: Rate for transmission through surface
 !		densityBit, density: Enables/disables using density + nPart to set 
 !		world length
+!		monomerStart: Specifies whether simulation should start with monomers
+!		or dimers
 !	replicas: Contains information for indexing WE replicas, including weights,
 !		bin locations, and total number of replicas currently
 !		sims, weights, binLocs: Arrays of simpointers (pointers to an 
