@@ -5,7 +5,7 @@ difM	1
 difD	0.5
 bindR	0.1
 unbindK	1000
-nPart	20
+nPart	40
 reactBit	1
 entryBit 0
 entryRate 0

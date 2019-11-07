@@ -83,10 +83,18 @@ struct fluxCounts{
 	int nT;
 };
 
+struct BinDefinitions{
+	double binDefArray[4*NBINSMAX];
+	int nBins;
+	int currentDims; //Only implemented to be 1 right now
+	int customBins;
+};
+
 struct paramsWeightedEnsemble paramsWe;
 struct paramsDynamicsEngine paramsDe;
 struct replicas Reps;
 struct fluxCounts fluxCDF;
+struct BinDefinitions binDefs;
 
 double lowBounds[2];
 double highBounds[2];

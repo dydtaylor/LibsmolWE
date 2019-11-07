@@ -125,7 +125,7 @@ int findBin(simptr currentSim){
 !---------------------------------------------------------------------------------------------------------------------
 */
 	//Finds number of molecules inside the ROI by inspecting each molecule's location
-	int binOut, nMol, nMolList;
+	int binOut, iBin, nMol, nMolList, orderParam;
 	double molX, molY;
 	binOut = 0;
 	if(ROBINS){
@@ -135,14 +135,25 @@ int findBin(simptr currentSim){
 		molY = currentSim->mols->live[nMolList][nMol]->pos[1];
 		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
 
-			binOut++;
+			orderParam++;
 		}
 	}
 	}
 	};
-	if(!ROBINS){
-		binOut = currentSim->mols->nl[0]; //Sets bin to # of monomers
+	if(binDefs.customBins){
+	for(iBin = 0; iBin < binDefs.nBins; iBin++){
+		if(orderParam >= binDefs.binDefArray[iBin] && orderParam < binDefs.binDefArray[iBin+1]){
+			binOut = iBin;
+			iBin = binDefs.nBins;
+		}
 	}
+	}
+	else{
+		binOut = orderParam;
+	}
+	/*if(!ROBINS){
+		binOut = currentSim->mols->nl[0]; //Sets bin to # of monomers
+	}*/ //Commented out for variable bin sizes with only 1d binning
 	return binOut;
 }
 
@@ -266,5 +277,95 @@ void copySim1(int simIn, int simOut){
 		}
 	}
 	*/
+}
+
+
+
+void buildEmptySim(int simOut){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Creates a simulation identical to copySim/initialDist, but with no molecules. Used for copying sim from
+!			text file
+!		Method:
+!			This functionally is very similar to the function copySim1. The distinctions are:
+!			1. It does not access any other sims
+!			2. It does not have any smolAddSolutionMolecules commands.
+!---------------------------------------------------------------------------------------------------------------------
+*/
+	
+	int nList, nMol;
+	//FILE *nulldev = fopen(NULLDEVICE, "w");
+	
+	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
+	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
+	double botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
+	double topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
+	double roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
+	double insideRoi[] = {0.0, 0.0};
+	
+	char const* monomer = "A";
+	char const* dimer = "B";
+	char const** dimerptr = &dimer;
+	enum MolecState outputStates[2];
+	char **unbindProducts, **stateList;
+	unbindProducts = (char**) calloc(2,sizeof(char*));
+	stateList = (char**) calloc(2,sizeof(char*));
+	unbindProducts[0] = (char*) calloc(256,sizeof(char));
+	unbindProducts[1] = (char*) calloc(256,sizeof(char));
+	stateList[0] = (char*) calloc(256, sizeof(char));
+	stateList[1] = (char*) calloc(256, sizeof(char));
+	strcpy(unbindProducts[0],monomer);
+	strcpy(unbindProducts[1],monomer);
+	strcpy(stateList[0],monomer);
+	strcpy(stateList[1],dimer);
+	outputStates[0] = MSsoln;
+	outputStates[1] = MSsoln;
+	
+	smolFreeSim(Reps.sims[simOut]);
+	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
+	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
+	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);
+	smolSetSimTimes(Reps.sims[simOut], 0, 10000, paramsDe.dt); //Reps.sims[simIn]->time is another option
+	smolAddMolList(Reps.sims[simOut],"mList");
+	smolAddSpecies(Reps.sims[simOut], "A", "mList");
+	smolSetSpeciesMobility(Reps.sims[simOut], "A", MSall, paramsDe.difM, NULL, NULL);
+	smolSetMaxMolecules(Reps.sims[simOut],2*paramsDe.nPart);
+	
+		if(paramsDe.reactBit > 0){
+			smolAddMolList(Reps.sims[simOut],"dList");
+			smolAddSpecies(Reps.sims[simOut], dimer, "dList");
+			smolSetSpeciesMobility(Reps.sims[simOut],dimer, MSall, paramsDe.difD, NULL, NULL);
+			smolAddReaction(Reps.sims[simOut], "binding", monomer, MSsoln, monomer, MSsoln, 1, dimerptr, &outputStates[0], -1);
+			smolSetReactionRate(Reps.sims[simOut], "binding", paramsDe.bindR, 1); //This line allows us to set the rate by the binding radius rather than kOn
+			smolAddReaction(Reps.sims[simOut], "unbinding", dimer, MSsoln, NULL , MSnone, 2,(const char**) unbindProducts, outputStates, paramsDe.unbindK);
+	}
+	
+	smolAddSurface(Reps.sims[simOut],"bounds");
+		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-x", topRightCornerRect);
+		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
+		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
+		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
+		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
+		
+	smolAddSurface(Reps.sims[simOut], "roi");
+	smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);
+		if(!paramsDe.reentryRateBit){
+		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans);
+		}
+		if(paramsDe.reentryRateBit){
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect);
+			smolSetSurfaceRate(Reps.sims[simOut], "roi", "all", MSsoln, MSsoln, MSbsoln, paramsDe.reentryRate, NULL, 1);
+		}
+	smolAddCompartment(Reps.sims[simOut],"roiComp");
+	smolAddCompartmentSurface(Reps.sims[simOut],"roiComp","roi");
+	smolAddCompartmentPoint(Reps.sims[simOut],"roiComp",insideRoi);
+	
+
+	if(STOPCOMMAND){
+	smolAddCommandFromString(Reps.sims[simOut], "e ifincmpt all = 0 roiComp stop");
+	}
+	smolUpdateSim(Reps.sims[simOut]);
 }
 
