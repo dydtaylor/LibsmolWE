@@ -38,10 +38,14 @@ echo Running on host `hostname`
 echo Time is `date`
 echo Directory is `pwd`
 ## Run executable
+if [ -e savestate.txt ];
+./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time 1 &>/dev/null
+else
+./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time 0 &>/dev/null
+fi
 
-./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time &>/dev/null
 ##Move Output to the save directory
-cp $run_name.Out $run_name.Flux $run_name.seed $run_name.Time ISEED mCountsWeighted.txt bin1.txt $saveDir
+cp $run_name.Out $run_name.Flux $run_name.seed $run_name.Time savestate.txt ISEED mCountsWeighted.txt bin1.txt monomerLocs.txt dimerLocs.txt $saveDir
 if [ -e ksOut.txt ];
 then
 cp ksOut.txt $saveDir
