@@ -1,7 +1,7 @@
-tau		10
-repsPerBin	10
-initialReps	10
-tauMax		1200
-nBins		25
+tau		50
+repsPerBin	300
+initialReps	100
+tauMax		12000
+nBins		20
 fluxBin	0
 ksNT	300

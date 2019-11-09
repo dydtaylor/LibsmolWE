@@ -128,6 +128,7 @@ int findBin(simptr currentSim){
 	int binOut, iBin, nMol, nMolList, orderParam;
 	double molX, molY;
 	binOut = 0;
+	orderParam = 0;
 	if(ROBINS){
 	for(nMolList = 0; nMolList < currentSim->mols->nlist; nMolList++){ 
 	for(nMol = 0; nMol < currentSim->mols->nl[nMolList]; nMol++){

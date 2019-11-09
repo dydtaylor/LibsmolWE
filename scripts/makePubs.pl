@@ -28,7 +28,7 @@ mkdir $tempDir
 
 ##Copy files from the save directory to the temp folder
 cd $saveDir
-cp weSmoldyn WEParams.txt dynamicsParams.txt ISEED $run_name.pub $tempDir
+cp weSmoldyn WEParams.txt dynamicsParams.txt binDefinitions.txt binParams.txt ISEED $run_name.pub $tempDir
 
 ##Execute code
 cd $tempDir
@@ -39,8 +39,11 @@ echo Time is `date`
 echo Directory is `pwd`
 ## Run executable
 if [ -e savestate.txt ];
+then
 ./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time 1 &>/dev/null
-else
+fi
+if [ ! -e savestate.txt ]
+then
 ./weSmoldyn $run_name.Out $run_name.Flux $run_name.seed 0 $run_name.Time 0 &>/dev/null
 fi
 

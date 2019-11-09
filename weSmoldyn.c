@@ -654,7 +654,7 @@ int main(int argc, char *argv[]){
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
 	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3],tauInit,loadBit; //tauQuarter omitted
-	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[4];
+	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[5];
 	clock_t start[5], stop[5]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, saveTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
@@ -678,7 +678,7 @@ int main(int argc, char *argv[]){
 		mCounts[iDimer] = 0;
 		mCountsWeighted[iDimer] = 0;
 	}
-	for(iClockInit = 0; iClockInit<=3; iClockInit++){
+	for(iClockInit = 0; iClockInit<=4; iClockInit++){
 		clockDouble[iClockInit]=0;
 	}
 	tauMax = paramsWe.tauMax;
@@ -820,8 +820,6 @@ int main(int argc, char *argv[]){
 		}
 		}
 		//Saving
-			saveWE();
-		
 		//Checking for first appearance of stray NANs
 		if(DEBUGGING){
 			if(nanCheck == 0){
@@ -858,8 +856,12 @@ int main(int argc, char *argv[]){
 		
 		stop[1] = clock();
 		clockDouble[1]+=(double)(stop[1]-start[1])/CLOCKS_PER_SEC;
-		
-		
+		start[4] = clock()
+		if(nWE > 0){	
+		saveWE();
+		}
+		start[5] = clock();
+		clockDouble[4] += (double)(stop[4]-start[4])/CLOCKS_PER_SEC;
 		if(DEBUGGING){
 			debugFile = fopen("Debug.txt","a");
 			fprintf(debugFile,"NANs checked and recorded. iSimMax = %i \n Dynamics Starting \n", Reps.iSimMax);
@@ -951,7 +953,7 @@ int main(int argc, char *argv[]){
 	
 	//Time Recording
 	clockFile = fopen(argv[5],"w");
-	fprintf(clockFile,"%E \n%E \n%E \n%E \n",clockDouble[0],clockDouble[1],clockDouble[2],clockDouble[3]);
+	fprintf(clockFile,"%E \n%E \n%E \n%E \n%E \n",clockDouble[0],clockDouble[1],clockDouble[2],clockDouble[3],clockDouble[4]);
 	fclose(clockFile);
 	
 	//Free Memory and finish
