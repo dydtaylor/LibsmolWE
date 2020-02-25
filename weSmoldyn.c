@@ -856,12 +856,15 @@ int main(int argc, char *argv[]){
 		
 		stop[1] = clock();
 		clockDouble[1]+=(double)(stop[1]-start[1])/CLOCKS_PER_SEC;
-		start[4] = clock()
-		if(nWE > 0){	
+		start[4] = clock();
+		if(nWE % 10 == 0){	
 		saveWE();
 		}
-		start[5] = clock();
+		stop[4] = clock();
 		clockDouble[4] += (double)(stop[4]-start[4])/CLOCKS_PER_SEC;
+		if(clockDouble[1]+clockDouble[4]>1){
+			nWE = tauMax;
+		}
 		if(DEBUGGING){
 			debugFile = fopen("Debug.txt","a");
 			fprintf(debugFile,"NANs checked and recorded. iSimMax = %i \n Dynamics Starting \n", Reps.iSimMax);
@@ -952,7 +955,7 @@ int main(int argc, char *argv[]){
 	clockDouble[3]+=(double)(stop[3]-start[3])/CLOCKS_PER_SEC;
 	
 	//Time Recording
-	clockFile = fopen(argv[5],"w");
+	clockFile = fopen(argv[5],"a");
 	fprintf(clockFile,"%E \n%E \n%E \n%E \n%E \n",clockDouble[0],clockDouble[1],clockDouble[2],clockDouble[3],clockDouble[4]);
 	fclose(clockFile);
 	
