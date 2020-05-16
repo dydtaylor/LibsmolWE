@@ -29,7 +29,7 @@
 #define WEENABLE 1 //Ignores WE and only runs Smoldyn dynamics
 #define ROBINS 1 // Specifies WE binning is based on N inside the ROI order parameter
 #define MONOFRACEACHDT 0 //Determines frequency of measuring monomerization fraction
-#define FIXEDTIME 0
+#define FIXEDTIME 1
 #define NNZMIN 500 //DKS Test non-zero min for 
 
 struct paramsWeightedEnsemble{
@@ -54,6 +54,14 @@ struct paramsDynamicsEngine{
 	double unbindK;
 	int nPart;
 	int reactBit;
+	int reentryRateBit;
+	double reentryRate;
+	int corralsBit;
+	double corralWidth;
+	double corralRate;
+	int densityBit;
+	double density;
+	int monomerStart;
 } ;
 
 struct replicas{
@@ -78,10 +86,18 @@ struct fluxCounts{
 	int nT;
 };
 
+struct BinDefinitions{
+	double binDefArray[4*NBINSMAX];
+	int nBins;
+	int currentDims; //Only implemented to be 1 right now
+	int customBins;
+};
+
 struct paramsWeightedEnsemble paramsWe;
 struct paramsDynamicsEngine paramsDe;
 struct replicas Reps;
 struct fluxCounts fluxCDF;
+struct BinDefinitions binDefs;
 
 double lowBounds[2];
 double highBounds[2];
@@ -148,6 +164,12 @@ double insideRoi[2];
 !		unbindK: Unbinding rate for dimers (1/nat time)
 !		nPart: Maximum number of monomers in the system (twice as many max dimers)
 !		reactBit: Enables binding / unbinding when set to 1, otherwise no rxns
+!		reentryRateBit: Enables / disables variable reentry rates.
+!		reentryRate: Rate for transmission through surface
+!		densityBit, density: Enables/disables using density + nPart to set 
+!		world length
+!		monomerStart: Specifies whether simulation should start with monomers
+!		or dimers
 !	replicas: Contains information for indexing WE replicas, including weights,
 !		bin locations, and total number of replicas currently
 !		sims, weights, binLocs: Arrays of simpointers (pointers to an 

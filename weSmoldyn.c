@@ -278,7 +278,7 @@ double fluxes(){
 	return fluxOut;
 }
 
-void getParams(FILE *DEFile, FILE *WEFile){
+void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
 	char tmpStr[32];
 	int jBin;
 	
@@ -298,6 +298,18 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.unbindK);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.nPart);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.reactBit);
+	fscanf(DEFile, "%s %i",tmpStr,&paramsDe.reentryRateBit);
+	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.reentryRate);
+	fscanf(DEFile, "%s %i",tmpStr, &paramsDe.densityBit);
+	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.density);
+	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.monomerStart);
+	fscanf(CorralsFile,"%s %i",tmpStr, &paramsDe.corralsBit);
+	fscanf(CorralsFile,"%s %lf",tmpStr, &paramsDe.corralWidth);
+	fscanf(CorralsFile,"%s %lf",tmpStr, &paramsDe.corralRate);
+	
+	if(paramsDe.densityBit){
+		paramsDe.worldLength = sqrt((double)paramsDe.nPart/paramsDe.density);
+	}
 	//paramsWe.fluxBin = 0;
 	Reps.iSimMax = paramsWe.nInit;
 	fclose(DEFile);
@@ -327,6 +339,27 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	
 	printf("Parameters loaded\n");
 }
+
+void loadBinDefs(){
+	
+	char tmpChar[32];
+	int iBinDef;
+	FILE *binDefinitions, *binParams;
+	binParams = fopen("binParams.txt","r");
+	binDefinitions = fopen("binDefinitions.txt","r");
+	fscanf(binParams,"%s %i", tmpChar, &binDefs.customBins);
+	fscanf(binParams,"%s %i", tmpChar, &binDefs.currentDims);
+	fscanf(binParams,"%s %i",tmpChar, &binDefs.nBins);
+	if(binDefs.customBins == 1){
+	for(iBinDef = 0; iBinDef < (binDefs.nBins+1); iBinDef++){
+		fscanf(binDefinitions,"%lf", &binDefs.binDefArray[iBinDef]);
+	}
+	}
+	fclose(binParams);
+	fclose(binDefinitions);
+}
+
+
 
 void KSTest(FILE *FluxFile, int nWE){
 	FILE *KSFile, *dKSFile; //, *debugKS;
@@ -546,25 +579,102 @@ void evacuatedParticles(){
 	
 }
 
+void saveWE(){
+	
+	/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Measures particle locations + replica weights to save WE state
+!		Method:
+!			For each sim write its weight + monomer locations to a file to be accessed later
+!				1. Loop through all active sims
+!				2. Record replica weight
+!				3. Write monomer X + Y locations
+!				4. Write dimer X + Y locations
+!---------------------------------------------------------------------------------------------------------------------
+*/
+	FILE *stateFile;
+	int iSim, nList, nMol;
+	
+	stateFile = fopen("savestate.txt","w");
+	fprintf(stateFile,"iSimMax %i \n",Reps.iSimMax);
+	for(iSim =0; iSim < Reps.iSimMax; iSim++){
+		fprintf(stateFile,"Weight %e \n",Reps.weights[iSim]);
+		for(nList = 0; nList < Reps.sims[iSim]->mols->nlist;nList++){
+			if(nList == 0){
+				fprintf(stateFile,"Monomers %i\n",Reps.sims[iSim]->mols->nl[nList]);
+				for(nMol = 0; nMol < Reps.sims[iSim]->mols->nl[nList];nMol++){
+						fprintf(stateFile,"%le, %le \n",Reps.sims[iSim]->mols->live[nList][nMol]->pos[0],Reps.sims[iSim]->mols->live[nList][nMol]->pos[1]);
+					}
+				}
+			if(nList ==1){
+				fprintf(stateFile,"Dimers %i\n",Reps.sims[iSim]->mols->nl[nList]);
+				for(nMol = 0; nMol < Reps.sims[iSim]->mols->nl[nList];nMol++){
+						fprintf(stateFile,"%le, %le \n",Reps.sims[iSim]->mols->live[nList][nMol]->pos[0],Reps.sims[iSim]->mols->live[nList][nMol]->pos[1]);
+					}
+				}
+			}
+	}
+	fclose(stateFile);
+}
+
+void loadWE(){
+	FILE *stateFile;
+	char tmpStr[32];
+	int iSim, nMonomers, nDimers,iMol;
+	double molPos[2];
+	char const* monomer = "A";
+	char const* dimer = "B";
+	char **stateList;
+	stateList = (char**) calloc(2,sizeof(char*));
+	stateList[0] = (char*) calloc(256, sizeof(char));
+	stateList[1] = (char*) calloc(256, sizeof(char));
+	strcpy(stateList[0],monomer);
+	strcpy(stateList[1],dimer);
+	
+	stateFile = fopen("savestate.txt","r");
+	
+	fscanf(stateFile,"%s %i",tmpStr, &Reps.iSimMax);
+	for(iSim = 0; iSim < Reps.iSimMax;iSim++){
+		buildEmptySim(iSim);
+		fscanf(stateFile,"%s %le",tmpStr, &Reps.weights[iSim]);
+		fscanf(stateFile,"%s %i",tmpStr, &nMonomers);
+		for(iMol = 0; iMol < nMonomers; iMol++){
+			fscanf(stateFile,"%le, %le",&molPos[0],&molPos[1]);
+			smolAddSolutionMolecules(Reps.sims[iSim],monomer, 1,molPos,molPos);
+			smolUpdateSim(Reps.sims[iSim]);
+		}
+		fscanf(stateFile,"%s %i",tmpStr,&nDimers);
+		for(iMol = 0; iMol < nDimers; iMol++){
+			fscanf(stateFile,"%le, %le",&molPos[0],&molPos[1]);
+			smolAddSolutionMolecules(Reps.sims[iSim],dimer,1,molPos,molPos);
+		}
+	}
+}
+
 int main(int argc, char *argv[]){
-	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file
+	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file argv6: Load Sim Bit (1 = load savestate.txt)
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3]; //tauQuarter omitted
-	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[4];
-	clock_t start[4], stop[4]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, this also corresponds to the order written in the output file
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3],tauInit,loadBit; //tauQuarter omitted
+	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[5];
+	clock_t start[5], stop[5]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, saveTime, this also corresponds to the order written in the output file
 
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
+	FILE *DEFile, *WEFile, *CorralsFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
+
 	char *fluxFileStr;
 	if(1){ //the only reason this exists is so that i can minimize this part while editing
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
+	CorralsFile = fopen("corralsParams.txt","r");
 	errFile = fopen(argv[3], "w");
 	
-	getParams(DEFile, WEFile);
+	getParams(DEFile, WEFile,CorralsFile);
 	
+	loadBinDefs();
+		
 	//Defining variables for continuous dimer counting, gives more data points for comparing monomerization fraction
 	
 	//These files will each give the total monomers, dimers, and either all "time" elapsed for all sims or all weight measured across
@@ -572,11 +682,11 @@ int main(int argc, char *argv[]){
 		mCounts[iDimer] = 0;
 		mCountsWeighted[iDimer] = 0;
 	}
-	for(iClockInit = 0; iClockInit<=3; iClockInit++){
+	for(iClockInit = 0; iClockInit<=4; iClockInit++){
 		clockDouble[iClockInit]=0;
 	}
-	
 	tauMax = paramsWe.tauMax;
+		tauInit = paramsWe.tauMax;
 	if(DEBUGGING){
 		debugFile = fopen("Debug.txt","a");
 		fprintf(debugFile,"Tau loops + flux vector made \n");
@@ -584,6 +694,7 @@ int main(int argc, char *argv[]){
 	}
 	//Set + record new RNG seed, set up initial distribution
 	rngBit = atoi(argv[4]);
+	loadBit = atoi(argv[6]);
 	fprintf(errFile, "iseed=%lx\n", RanInitReturnIseed(rngBit));
 	fprintf(errFile, "fluxBin = %i \n", paramsWe.fluxBin);
 	if(!STOPCOMMAND){
@@ -597,7 +708,12 @@ int main(int argc, char *argv[]){
 	}
     fclose(errFile);
 	start[0] = clock();
+		if(~loadBit){
 	initialDist(paramsWe.nInit);
+		}
+		if(loadBit){
+			loadWE();
+		}
 	stop[0] = clock();
 	clockDouble[0]+=(double)(stop[0]-start[0])/CLOCKS_PER_SEC;
 	if(DEBUGGING){
@@ -622,7 +738,7 @@ int main(int argc, char *argv[]){
 	}
 	//Simulation Loop
 	for(nWE = 0; nWE < tauMax; nWE++){
-		
+		if(nWE > 0 || !loadBit){
 		//Print current tau step to stdout for interactive debugging
 		if(DEBUGGING){
 		debugFile = fopen("Debug.txt","a");
@@ -706,7 +822,8 @@ int main(int argc, char *argv[]){
 				fclose(debugFile);
 			}
 		}
-		
+		}
+		//Saving
 		//Checking for first appearance of stray NANs
 		if(DEBUGGING){
 			if(nanCheck == 0){
@@ -743,8 +860,15 @@ int main(int argc, char *argv[]){
 		
 		stop[1] = clock();
 		clockDouble[1]+=(double)(stop[1]-start[1])/CLOCKS_PER_SEC;
-		
-		
+		start[4] = clock();
+		if(nWE % 10 == 0){	
+		saveWE();
+		}
+		stop[4] = clock();
+		clockDouble[4] += (double)(stop[4]-start[4])/CLOCKS_PER_SEC;
+		if(clockDouble[1]+clockDouble[4]>1){
+			nWE = tauMax;
+		}
 		if(DEBUGGING){
 			debugFile = fopen("Debug.txt","a");
 			fprintf(debugFile,"NANs checked and recorded. iSimMax = %i \n Dynamics Starting \n", Reps.iSimMax);
@@ -770,7 +894,7 @@ int main(int argc, char *argv[]){
 			Reps.binContentsMax[Reps.binLocs[iSim]]++;
 			//Dimerization Fraction Recording
 			if(!MONOFRACEACHDT){
- 			if(nWE > tauMax/2){
+ 			if(nWE > tauInit/2){
 				mCounts[0] += Reps.sims[iSim]->mols->nl[0];
 				mCounts[1] += Reps.sims[iSim]->mols->nl[1];
 				mCounts[2]++;
@@ -821,7 +945,7 @@ int main(int argc, char *argv[]){
 			fclose(debugFile);
 		}
 		
-		if(nWE > tauMax/2){
+		if(nWE > tauInit/2){
 			//mCountsFile = fopen("mCounts.txt","a");
 			//fprintf(mCountsFile, "%i, %i, %i \n", mCounts[0], mCounts[1], mCounts[2]);
 			//fclose(mCountsFile);
@@ -835,8 +959,8 @@ int main(int argc, char *argv[]){
 	clockDouble[3]+=(double)(stop[3]-start[3])/CLOCKS_PER_SEC;
 	
 	//Time Recording
-	clockFile = fopen(argv[5],"w");
-	fprintf(clockFile,"%E \n%E \n%E \n%E \n",clockDouble[0],clockDouble[1],clockDouble[2],clockDouble[3]);
+	clockFile = fopen(argv[5],"a");
+	fprintf(clockFile,"%E \n%E \n%E \n%E \n%E \n",clockDouble[0],clockDouble[1],clockDouble[2],clockDouble[3],clockDouble[4]);
 	fclose(clockFile);
 	
 	//Free Memory and finish
