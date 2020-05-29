@@ -19,6 +19,7 @@ void initialDist(int nInit){
 !---------------------------------------------------------------------------------------------------------------------
 */
 	int jSim;
+	int nCorrals, iCorrals;
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
 	double botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
@@ -71,6 +72,33 @@ void initialDist(int nInit){
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+y", topRightCornerRect);
 		smolSetSurfaceAction(Reps.sims[jSim], "bounds", PFboth, "all", MSall, SAreflect);
+		
+		//Corrals
+		/*To calculate nCorrals:
+		Want the corrals centered at the origin. The first line of the corral 
+		squares will be at +- width/2. The remaining L/2 - width/2 will then be 
+		split by the width. The first line gives the +1 in the expression below, 
+		while the floor function terms describe taking the remaining L/2 - width/2 
+		and splitting it.
+        */
+		if(paramsDe.corralsBit){
+		nCorrals = floor((paramsDe.worldLength - paramsDe.corralWidth)/(2*paramsDe.corralWidth))+1;
+		smolAddSurface(Reps.sims[jSim],"corrals");
+		for(iCorrals = 1; iCorrals < nCorrals+1; iCorrals++){
+				double panelHorAbove0[] ={(-paramsDe.worldLength/2),paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2,paramsDe.worldLength};
+    double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
+    double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,-paramsDe.worldLength};
+    double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,-paramsDe.worldLength};
+	
+			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+y",panelHorAbove0 ); //Horizontal panels above origin
+			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+y" ,panelHorBelow0 ); //Horizontal panels below origin 
+			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
+			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
+		}
+		smolSetSurfaceAction(Reps.sims[jSim],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceRate(Reps.sims[jSim],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
+		smolSetSurfaceRate(Reps.sims[jSim],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
+		}
 		
 		
 		//ROI Surface + compartment
@@ -187,7 +215,7 @@ void copySim1(int simIn, int simOut){
 !---------------------------------------------------------------------------------------------------------------------
 */
 	
-	int nList, nMol;
+	int nList, nMol, nCorrals, iCorrals;
 	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
@@ -196,7 +224,7 @@ void copySim1(int simIn, int simOut){
 	double topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
 	double roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
 	double insideRoi[] = {0.0, 0.0};
-	
+
 	char const* monomer = "A";
 	char const* dimer = "B";
 	char const** dimerptr = &dimer;
@@ -240,6 +268,24 @@ void copySim1(int simIn, int simOut){
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
 		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
+		
+		if(paramsDe.corralsBit){
+		nCorrals = floor((paramsDe.worldLength - paramsDe.corralWidth)/(2*paramsDe.corralWidth))+1;
+		smolAddSurface(Reps.sims[simOut],"corrals");
+		for(iCorrals = 1; iCorrals < nCorrals + 1; iCorrals++){
+				double panelHorAbove0[] ={(-paramsDe.worldLength/2),paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2,paramsDe.worldLength};
+    double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
+    double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+    double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y" ,panelHorAbove0 ); //Horizontal panels above origin
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y" ,panelHorBelow0 ); //Horizontal panels below origin 
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
+		}
+		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
+		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
+		}
 		
 	smolAddSurface(Reps.sims[simOut], "roi");
 	smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);
@@ -295,7 +341,7 @@ void buildEmptySim(int simOut){
 !---------------------------------------------------------------------------------------------------------------------
 */
 	
-	int nList, nMol;
+	int nList, nMol,nCorrals,iCorrals;
 	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
@@ -304,7 +350,7 @@ void buildEmptySim(int simOut){
 	double topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
 	double roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
 	double insideRoi[] = {0.0, 0.0};
-	
+
 	char const* monomer = "A";
 	char const* dimer = "B";
 	char const** dimerptr = &dimer;
@@ -341,6 +387,24 @@ void buildEmptySim(int simOut){
 			smolSetReactionRate(Reps.sims[simOut], "binding", paramsDe.bindR, 1); //This line allows us to set the rate by the binding radius rather than kOn
 			smolAddReaction(Reps.sims[simOut], "unbinding", dimer, MSsoln, NULL , MSnone, 2,(const char**) unbindProducts, outputStates, paramsDe.unbindK);
 	}
+	
+	if(paramsDe.corralsBit){
+		nCorrals = floor((paramsDe.worldLength - paramsDe.corralWidth)/(2*paramsDe.corralWidth))+1;
+		smolAddSurface(Reps.sims[simOut],"corrals");
+		for(iCorrals = 1; iCorrals < nCorrals+1; iCorrals++){
+				double panelHorAbove0[] ={(-paramsDe.worldLength/2),paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2,paramsDe.worldLength};
+    double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
+    double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+    double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y",panelHorAbove0 ); //Horizontal panels above origin
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y" ,panelHorBelow0 ); //Horizontal panels below origin 
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
+			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
+		}
+		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
+		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
+		}
 	
 	smolAddSurface(Reps.sims[simOut],"bounds");
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-x", topRightCornerRect);

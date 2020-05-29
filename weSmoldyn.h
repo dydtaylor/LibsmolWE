@@ -56,6 +56,9 @@ struct paramsDynamicsEngine{
 	int reactBit;
 	int reentryRateBit;
 	double reentryRate;
+	int corralsBit;
+	double corralWidth;
+	double corralRate;
 	int densityBit;
 	double density;
 	int monomerStart;

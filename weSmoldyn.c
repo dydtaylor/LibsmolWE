@@ -278,7 +278,7 @@ double fluxes(){
 	return fluxOut;
 }
 
-void getParams(FILE *DEFile, FILE *WEFile){
+void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
 	char tmpStr[32];
 	int jBin;
 	
@@ -303,6 +303,9 @@ void getParams(FILE *DEFile, FILE *WEFile){
 	fscanf(DEFile, "%s %i",tmpStr, &paramsDe.densityBit);
 	fscanf(DEFile, "%s %lf",tmpStr, &paramsDe.density);
 	fscanf(DEFile, "%s %i", tmpStr, &paramsDe.monomerStart);
+	fscanf(CorralsFile,"%s %i",tmpStr, &paramsDe.corralsBit);
+	fscanf(CorralsFile,"%s %lf",tmpStr, &paramsDe.corralWidth);
+	fscanf(CorralsFile,"%s %lf",tmpStr, &paramsDe.corralRate);
 	
 	if(paramsDe.densityBit){
 		paramsDe.worldLength = sqrt((double)paramsDe.nPart/paramsDe.density);
@@ -646,6 +649,7 @@ void loadWE(){
 			fscanf(stateFile,"%le, %le",&molPos[0],&molPos[1]);
 			smolAddSolutionMolecules(Reps.sims[iSim],dimer,1,molPos,molPos);
 		}
+		Reps.binLocs[iSim]=findBin(Reps.sims[iSim]);
 	}
 }
 
@@ -653,21 +657,22 @@ int main(int argc, char *argv[]){
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file argv6: Load Sim Bit (1 = load savestate.txt)
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
-	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3],tauInit,loadBit; //tauQuarter omitted
+	int tauMax, rngBit, iBin, nWE, iSim, iBCM, nanCheck, firstNAN, iDimer,iBinContents,iClockInit,mCounts[3],tauInit,loadBit,nWEstart; //tauQuarter omitted
 	double fluxAtStep, binWeight,mCountsWeighted[3], clockDouble[5];
 	clock_t start[5], stop[5]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, saveTime, this also corresponds to the order written in the output file
-
+	char fileReader;
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
+	FILE *DEFile, *WEFile, *CorralsFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
 
 	char *fluxFileStr;
 	if(1){ //the only reason this exists is so that i can minimize this part while editing
 	fluxFileStr = argv[2];
 	DEFile = fopen("dynamicsParams.txt","r");
 	WEFile = fopen("WEParams.txt","r");
+	CorralsFile = fopen("corralsParams.txt","r");
 	errFile = fopen(argv[3], "w");
 	
-	getParams(DEFile, WEFile);
+	getParams(DEFile, WEFile,CorralsFile);
 	
 	loadBinDefs();
 		
@@ -705,10 +710,18 @@ int main(int argc, char *argv[]){
     fclose(errFile);
 	start[0] = clock();
 		if(~loadBit){
-	initialDist(paramsWe.nInit);
+			initialDist(paramsWe.nInit);
+			nWEstart = 0;
 		}
 		if(loadBit){
 			loadWE();
+			nWEstart = 1;
+			FLFile = fopen(fluxFileStr,"r");
+			for(fileReader = getc(FLFile);fileReader!=EOF;fileReader=getc(FLFile)){
+				if(fileReader =='\n'){
+					nWEstart +=1;
+				}
+			}
 		}
 	stop[0] = clock();
 	clockDouble[0]+=(double)(stop[0]-start[0])/CLOCKS_PER_SEC;
@@ -733,8 +746,8 @@ int main(int argc, char *argv[]){
 	start[3] = clock();
 	}
 	//Simulation Loop
-	for(nWE = 0; nWE < tauMax; nWE++){
-		if(nWE > 0 || !loadBit){
+	for(nWE = nWEstart; nWE < tauMax; nWE++){
+		if(nWE > nWEstart || !loadBit){
 		//Print current tau step to stdout for interactive debugging
 		if(DEBUGGING){
 		debugFile = fopen("Debug.txt","a");
@@ -818,6 +831,7 @@ int main(int argc, char *argv[]){
 				fclose(debugFile);
 			}
 		}
+			stop[1] = clock();
 		}
 		//Saving
 		//Checking for first appearance of stray NANs
@@ -853,8 +867,6 @@ int main(int argc, char *argv[]){
 		}
 		}
 		
-		
-		stop[1] = clock();
 		clockDouble[1]+=(double)(stop[1]-start[1])/CLOCKS_PER_SEC;
 		start[4] = clock();
 		if(nWE % 10 == 0){	
@@ -862,7 +874,7 @@ int main(int argc, char *argv[]){
 		}
 		stop[4] = clock();
 		clockDouble[4] += (double)(stop[4]-start[4])/CLOCKS_PER_SEC;
-		if(clockDouble[1]+clockDouble[4]>1){
+		if(clockDouble[1]+clockDouble[4]+clockDouble[2]>250000){
 			nWE = tauMax;
 		}
 		if(DEBUGGING){
