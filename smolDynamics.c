@@ -89,6 +89,10 @@ void initialDist(int nInit){
     double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
     double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,-paramsDe.worldLength};
     double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,-paramsDe.worldLength};
+			
+			if((paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2)>=paramsDe.worldLength/2){
+				continue;
+			}
 	
 			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+y",panelHorAbove0 ); //Horizontal panels above origin
 			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+y" ,panelHorBelow0 ); //Horizontal panels below origin 
@@ -137,6 +141,7 @@ void dynamicsEngine(simptr currentSim){
 	//smolUpdateSim(currentSim);
 	for(int i = 0; i < paramsWe.tau; i++){
 	smolRunTimeStep(currentSim);
+		smolDisplaySim(currentSim);
 	}
 	
 }
@@ -274,9 +279,12 @@ void copySim1(int simIn, int simOut){
 		smolAddSurface(Reps.sims[simOut],"corrals");
 		for(iCorrals = 1; iCorrals < nCorrals + 1; iCorrals++){
 				double panelHorAbove0[] ={(-paramsDe.worldLength/2),paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2,paramsDe.worldLength};
-    double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
-    double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
-    double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+    			double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
+				double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+    			double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+			if((paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2)>=paramsDe.worldLength/2){
+				continue;
+			}
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y" ,panelHorAbove0 ); //Horizontal panels above origin
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y" ,panelHorBelow0 ); //Horizontal panels below origin 
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
@@ -396,6 +404,9 @@ void buildEmptySim(int simOut){
     double panelHorBelow0[] = {-paramsDe.worldLength/2,-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength};
     double panelVertAbove0[] = {(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
     double panelVertBelow0[] = 	{-1*(paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2),paramsDe.worldLength/2,paramsDe.worldLength};
+						if((paramsDe.corralWidth*iCorrals-paramsDe.corralWidth/2)>=paramsDe.worldLength/2){
+				continue;
+			}
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y",panelHorAbove0 ); //Horizontal panels above origin
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+y" ,panelHorBelow0 ); //Horizontal panels below origin 
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin

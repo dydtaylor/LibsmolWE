@@ -722,6 +722,9 @@ int main(int argc, char *argv[]){
 					nWEstart +=1;
 				}
 			}
+		if(nWEstart >= tauMax){
+			tauMax *=2;
+		}
 		}
 	stop[0] = clock();
 	clockDouble[0]+=(double)(stop[0]-start[0])/CLOCKS_PER_SEC;
@@ -746,7 +749,7 @@ int main(int argc, char *argv[]){
 	start[3] = clock();
 	}
 	//Simulation Loop
-	for(nWE = nWEstart; nWE < tauMax; nWE++){
+	for(nWE = nWEstart-1; nWE < tauMax; nWE++){
 		if(nWE > nWEstart || !loadBit){
 		//Print current tau step to stdout for interactive debugging
 		if(DEBUGGING){

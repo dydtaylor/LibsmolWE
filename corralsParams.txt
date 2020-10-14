@@ -1,3 +1,3 @@
 corralsBit 1
-corralsWidth 0.3
-corralsRate 0.4
+corralsWidth 1
+corralsRate 0.1
