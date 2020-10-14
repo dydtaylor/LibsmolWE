@@ -1,14 +1,65 @@
 #!/bin/bash
 #$ -N 
-#$ -q bio,abio,free64,pub64
-#$ -ckpt blcr
-#$ -e logs/.err
-#$ -o logs/.log
-cd /pub/mbovyn/
+#$ -q rxn,free64,pub64
+#$ -ckpt restart
+#$ -r y
+#$ -t 1-2
+#$ -e ..err
+#$ -o ..log
+
+run_name=test.runNo
+tempDir=/tmp/robertbt/test.runNo
+saveDir=/dfs3/pub/robertbt/WELibsmolData/test.runNo
+
+##ISEED Changing
+./seedchange  0
+
+##Make temp folders for execution
+mkdir /tmp/robertbt
+mkdir  
+
+##Copy files from the save directory to the temp folder
+cd 
+cp weSmoldyn WEParams.txt corralsParams.txt dynamicsParams.txt binDefinitions.txt binParams.txt ISEED .pub 
+if [ -e savestate.txt ];
+then
+cp .Out .Flux .seed .Time savestate.txt ISEED mCountsWeighted.txt bin1.txt monomerLocs.txt dimerLocs.txt 
+fi
+##Execute code
+cd 
+LD_LIBRARY_PATH=/data/users/robertbt/lib
+export LD_LIBRARY_PATH
 echo Running on host `hostname`
 echo Time is `date`
 echo Directory is `pwd`
-# Run executable
-#motors.x instance_name repeat verbose keep_seed
-./motors.x   2 0
+## Run executable
+if [ -e savestate.txt ];
+then
+echo Savestate Found
+./weSmoldyn .Out .Flux .seed 0 .Time 1 &>/dev/null
+fi
+if [ ! -e savestate.txt ]
+then
+echo Savestate Not Found
+./weSmoldyn .Out .Flux .seed 0 .Time 0 &>/dev/null
+fi
+
+##Move Output to the save directory
+cp .Out .Flux .seed .Time 
+savestate.txt ISEED mCountsWeighted.txt bin1.txt 
+monomerLocs.txt dimerLocs.txt 
+
+if [ -e ksOut.txt ];
+then
+cp ksOut.txt 
+fi
+
+if [ -e dualKS.txt ];
+then
+cp dualKS.txt 
+fi
+
+cd ..
+##Cleanup temp directory
+rm -rf /tmp/robertbt/
 echo Finished at `date`

@@ -16,9 +16,13 @@ Refers to ISEED to initialize C's random number generator.
 Iterates the random number generator N times (user arg)
 then uses that to reseed ISEED
 
-The goal would be to use each possible "rand" instance at line 49/51 to make a new ISEED for each simulation, but because of how the files are copied with a bash script and each rand call in the loop is "lost", after I call this once I reset the ISEED file once I've copied the new file over, then re-seed with an integer one greater than the previous one.
+The goal would be to use each possible "rand" instance at line 49/51 to 
+make a new ISEED for each simulation, but because of how the files are copied with a bash script
+and each rand call in the loop is "lost", after I call this once I reset the ISEED file once 
+I've copied the new file over, then re-seed with an integer one greater than the previous one.
 
-The reason I'm doing it like this rather than just leaving ISEED the same each time is to hopefully make the runs slightly more reproducible / easier to track the ISEEDs
+The reason I'm doing it like this rather than just leaving ISEED the same each time is to hopefully
+ make the runs slightly more reproducible / easier to track the ISEEDs
 */
 int main(int argc, char *argv[]){
 	int i, j, reset, repeats;
@@ -46,7 +50,7 @@ int main(int argc, char *argv[]){
 	if(iseed>0) iseed*=-1;
 	
 	srand(iseed); //Loads ISEED to seed C's rand function
-	repeats = atoi(argv[1]);
+	repeats = atoi(argv[1]); //If repeats is >1, call rand multiple times before running.
 	for(i = 0; i<repeats-1; i++){
 		rand();
 	}

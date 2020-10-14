@@ -29,7 +29,7 @@
 #define WEENABLE 1 //Ignores WE and only runs Smoldyn dynamics
 #define ROBINS 1 // Specifies WE binning is based on N inside the ROI order parameter
 #define MONOFRACEACHDT 0 //Determines frequency of measuring monomerization fraction
-#define FIXEDTIME 1
+#define FIXEDTIME 0
 #define NNZMIN 500 //DKS Test non-zero min for 
 
 struct paramsWeightedEnsemble{

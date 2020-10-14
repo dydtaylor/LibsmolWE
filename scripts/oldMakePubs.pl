@@ -28,7 +28,7 @@
 run_name=$run_name_Prefix.runNo\$SGE_TASK_ID
 tempDir=$tempDirPrefix.runNo\$SGE_TASK_ID
 saveDir=$saveDirPrefix
-##If statement checks to make sure that the simulation has not previously finished and has not previously started.
+##First argv being > 0 means we are simply finding simulations that did not run and ONLY rerunning them. 
 
 	if [ ! -e \$run_name.Time ]
 	then
@@ -72,10 +72,11 @@ saveDir=$saveDirPrefix
 			./weSmoldyn \$run_name.Out \$run_name.Flux \$run_name.seed 0 \$run_name.Time 0 &>/dev/null
 		fi
 
+
 ##Move Output to the save directory
 		mv savestate.txt savestate\$SGE_TASK_ID.txt
 		mv mCountsWeighted.txt mCountsWeighted\$SGE_TASK_ID.txt
-		cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SGE_TASK_ID.txt ISEED mCountsWeighted\$SGE_TASK_ID.txt bin1\$SGE_TASK_ID.txt monomerLocs\$SGE_TASK_ID.txt dimerLocs\$SGE_TASK_ID.txt \$saveDir
+		cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SGE_TASK_ID.txt ISEED mCountsWeighted\$SGE_TASK_ID.txt bin1.txt monomerLocs.txt dimerLocs.txt \$saveDir
 
 		if [ -e ksOut.txt ];
 		then
@@ -90,7 +91,6 @@ saveDir=$saveDirPrefix
 		cd ..
 	##Cleanup temp directory
 		rm -rf /tmp/robertbt/\$run_name
-		cd \$saveDir
 		echo Finished at `date`
 	fi
 

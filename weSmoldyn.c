@@ -722,9 +722,9 @@ int main(int argc, char *argv[]){
 					nWEstart +=1;
 				}
 			}
-		if(nWEstart >= tauMax){
-			tauMax *=2;
-		}
+			if(nWEstart>=tauMax){
+				tauMax *=2;
+			}
 		}
 	stop[0] = clock();
 	clockDouble[0]+=(double)(stop[0]-start[0])/CLOCKS_PER_SEC;

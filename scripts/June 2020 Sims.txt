@@ -1,0 +1,52 @@
+Sims to be completed as of May31 2020
+Dimerization:
+Needs to be prepared to execute at a high density
+
+Probabilistic reentry
+Needs to be prepared to execute at a high density
+
+Actin corrals:
+All sims need to be done
+
+Other:
+Investigate boundary effects at physiological densities
+
+Changes in the code prior to executing these sims:
+Implemented savestates. Created corrals, new corrals parameters file.
+
+
+Files needed to be copied for each sim:
+weSmoldyn
+binDefinitions.txt
+binParams.txt
+corralsParams.txt
+dynamicsParams.txt
+RunTypeRunName.pub
+WEparams.txt
+ISEED
+
+Scripts to execute for each sim:
+
+High density dimer sweep - 
+binding radii should correspond to size of the unit cell for CD45, 86x60x160 angstroms, or a 3-4nm binding radius. Our ROI radius of 1 corresponds to a length ranging from 100nm-300nm, so that corresponds to a binding radius of .03-.12. We'll use .003, .03, and .3 as our test binding radii (though we might predictably expect that .3 is large enough that the solution might be completely dimeric)
+
+Thankfully our previous sweeps were done with binding radii at .001 and .005, so we know which unbinding rates give a complete sweep for those (10^-3 to 10^6, approximately) so we can scale those up twice to hopefully give a complete sweep for .03 and .3 as well
+
+To execute these sims, we'll want to use "repeatedDimerCheck.sh". It's worth making sure that the split for monomeric vs dimeric starts happens at a reasonable unbinding radius. (potentially replace the bindR loop with separate loops to better split based on unbindK)
+
+Binning should be done according to some "good enough" binning method. 1d binning
+
+Probabilistic reentry:
+reentryRateScan.sh
+Dimerization should be turned off. Probability should scan from 0 to 1. Most likely want 20 runs at each p value.
+
+Actin corrals:
+Script needs to be written
+Need to use a variety of sizings and probabilities. Try doing a cursory run with 3 different sizings and scan hopping rates from 0 to 1
+
+Other:
+Boundary effects
+constantDensityScan.sh
+
+Set density to physiological densities (90molecules / 9 square units of area = 10) and scan for a variety of molecules. Note that since the area of the ROI is pi and the density is 10, the number of particles you scan across should be >32 (try something like 40-150).
+Bins are kind of a bitch for this. Try creating a "binDefinitions1.txt" and "binDefinitions2.txt" etc. for some cutoff point. Copy binDefinitions1.txt as binDefinitions.txt

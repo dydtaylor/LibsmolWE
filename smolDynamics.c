@@ -141,7 +141,6 @@ void dynamicsEngine(simptr currentSim){
 	//smolUpdateSim(currentSim);
 	for(int i = 0; i < paramsWe.tau; i++){
 	smolRunTimeStep(currentSim);
-		smolDisplaySim(currentSim);
 	}
 	
 }
