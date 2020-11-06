@@ -354,6 +354,8 @@ void loadBinDefs(){
 	for(iBinDef = 0; iBinDef < (binDefs.nBins+1); iBinDef++){
 		fscanf(binDefinitions,"%lf", &binDefs.binDefArray[iBinDef]);
 	}
+		paramsWe.nBins = binDefs.nBins;
+		Reps.nBins = paramsWe.nBins;
 	}
 	fclose(binParams);
 	fclose(binDefinitions);

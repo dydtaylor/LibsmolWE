@@ -167,8 +167,13 @@ int findBin(simptr currentSim){
 		molX = currentSim->mols->live[nMolList][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[nMolList][nMol]->pos[1];
 		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
-
+			if(nMolList==1){
 			orderParam++;
+			}
+			if(nMolList==2){
+				orderParam++;
+				orderParam++;
+			}
 		}
 	}
 	}
