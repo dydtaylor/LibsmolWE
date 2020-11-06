@@ -1,3 +1,3 @@
-corralsBit 0
-corralsWidth 	3
-corralsRate 		0.1
+corralsBit 1
+corralsWidth 	2.25
+corralsRate 		0.00001

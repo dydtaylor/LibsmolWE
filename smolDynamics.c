@@ -166,11 +166,12 @@ int findBin(simptr currentSim){
 	for(nMol = 0; nMol < currentSim->mols->nl[nMolList]; nMol++){
 		molX = currentSim->mols->live[nMolList][nMol]->pos[0]; //first index changes based on how we org mol lists
 		molY = currentSim->mols->live[nMolList][nMol]->pos[1];
-		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){
-			if(nMolList==1){
+		if((molX*molX+ molY*molY) < paramsDe.roiR*paramsDe.roiR){ 
+			//Currently, it is hard coded in that monomers occur at nMolList = 1 and dimers at nMolList = 2. If the system changes in number of species or potentially the order the species get declared in, this section NEEDS to change.
+			if(nMolList==0){
 			orderParam++;
 			}
-			if(nMolList==2){
+			if(nMolList==1){
 				orderParam++;
 				orderParam++;
 			}
