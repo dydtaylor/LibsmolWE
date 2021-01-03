@@ -1,12 +1,12 @@
 #!/bin/bash
-N=128
+N=$5
 
 cd ..
 
 sed -i "9c\reactBit	1
 " "dynamicsParams.txt"
 
-sed -i "5c\nBins 45
+sed -i "5c\nBins 20
 " "WEParams.txt"
 
 sed -i "14c\monomerStart 0
@@ -25,12 +25,9 @@ then
 d=$4
 fi
 
-cd scripts
-
-
 	sed -i "8c\nPart	${N}
 	" "dynamicsParams.txt"
-
+cd scripts
 	for runNo in $2
 	do
 
@@ -49,7 +46,7 @@ cd scripts
 
 				#make
 
-				mkdir $SAVEPATH/$FULLNAME
+				mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "6c\bindR	${bindR}
 " "dynamicsParams.txt"
@@ -92,7 +89,7 @@ cd ..
 
 #make
 
-mkdir $SAVEPATH/$FULLNAME
+mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "6c\bindR	${bindR}
 " "dynamicsParams.txt"
@@ -114,7 +111,7 @@ cd ..
 sed -i "9c\reactBit	0
 " "dynamicsParams.txt"
 
-cd /dfs3/pub/robertbt/WELibsmolData
+cd /dfs6/pub/robertbt/WELibsmolData
 
 
 for runNo in $2;

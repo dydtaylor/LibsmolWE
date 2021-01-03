@@ -21,10 +21,10 @@ sed -i "1c\dt	.000001
 sed -i "1c\tau		50
 " "WEParams.txt"
 
-sed -i "2c\repsPerBin	50
+sed -i "2c\repsPerBin	200
 " "WEParams.txt"
 
-sed -i "3c\initialReps 	500
+sed -i "3c\initialReps 	1000
 " "WEParams.txt"
 
 sed -i "4c\tauMax		12000
@@ -45,38 +45,42 @@ sed -i "12c\densityBit	0
 sed -i "1c\corralsBit 0
 " "corralsParams.txt"
 
-sed -i "2c\worldL	4
+sed -i "2c\worldL	3
 " "dynamicsParams.txt"
 make
 
 cd scripts
 #Execute beginning scripts. constantNSweepL might need to be changed depending on box size.
-./simpleDiffusionSweep.sh $1 $2 0 null 4
-./simpleDiffusionConstantNSweepL.sh $1 $2 0 null
-./constantDensityScan.sh $1 $2 0 null
+./simpleDiffusionSweep.sh $1 $2 $3 $4 3
+cd ..
+
+cp binDefinitions1.txt binDefinitions.txt
+cd scripts
+./simpleDiffusionConstantNSweepL.sh $1 $2 $3 $4
+./constantDensityScan.sh $1 $2 $3 $4 6
 
 
 ##Change parameters + binning that is different for each sim. Use binDefinitions2.txt for N>100
 cd ..
-sed -i "2c\worldL	4
+sed -i "2c\worldL	3
 " "dynamicsParams.txt"
 
-sed -i "8c\nPart	128
+sed -i "8c\nPart	54
 " "dynamicsParams.txt"
 
-cp binDefinitions2.txt binDefinitions.txt
+cp binDefinitions1.txt binDefinitions.txt
 
 cd scripts
 
-./reentryRateScan.sh $1 $2 0 null
-./repeatedDimerCheck.sh $1 $2 0 null
+./reentryRateScan.sh $1 $2 $3 $4
+./repeatedDimerCheck.sh $1 $2 $3 $4 54
 
 ##Return binning to low N binning.
 cd ..
 cp binDefinitions1.txt binDefinitions.txt
 cd scripts
 
-./corralsSweep.sh  $1 $2 0 null
+./corralsSweep.sh  $1 $2 $3 $4
 
 #Simple diffusion scripts will go here and follow the same convention. They are separated right now because the scripts need to be changed.
 

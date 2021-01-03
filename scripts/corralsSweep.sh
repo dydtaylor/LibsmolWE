@@ -8,7 +8,7 @@ sed -i "1c\corralsBit 1
 sed -i "8c\nPart	20
 " "dynamicsParams.txt"
 
-sed -i "2c\repsPerBin	100
+sed -i "2c\repsPerBin	500
 " "WEParams.txt"
 
 sed -i "3c\initialReps 	5000
@@ -46,7 +46,7 @@ FULLNAME=$1.$d.Corrals.width${corralWidth}.corralRate${corralRate}
 
 cd ..
 
-mkdir $SAVEPATH/$FULLNAME
+mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "2c\corralsWidth 	${corralWidth}
 " "corralsParams.txt"
@@ -69,7 +69,7 @@ cd ..
 sed -i "1c\corralsBit 0
 " "corralsParams.txt"
 
-cd /dfs3/pub/robertbt/WELibsmolData
+cd /dfs6/pub/robertbt/WELibsmolData
 
 for runNo in $2
 do
@@ -94,8 +94,8 @@ done
 
 cd /data/users/robertbt/libsmolWEDimerCode/LibsmolWE
 
-sed -i "2c\repsPerBin	50
+sed -i "2c\repsPerBin	200
 " "WEParams.txt"
 
-sed -i "3c\initialReps 	500
+sed -i "3c\initialReps 	1000
 " "WEParams.txt"

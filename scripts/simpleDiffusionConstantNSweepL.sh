@@ -13,7 +13,7 @@ fi
 
 runNo=$2
 
-for L in 2 2.25 2.5 2.75 3 3.25 3.5 3.75
+for L in 2 2.25 2.5 2.75
 do
 for n in {1..30}
 do
@@ -24,7 +24,7 @@ FULLNAME=$1.$d.SimpleDiffusion.L${L}.n${n}
 ./makePubs.pl $FULLNAME $runNo
 cd ..
 
-mkdir $SAVEPATH/$FULLNAME
+mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "2c\worldL	${L}
 " "dynamicsParams.txt"
@@ -44,10 +44,10 @@ cd scripts
 done
 done
 
-cd /dfs3/pub/robertbt/WELibsmolData
+cd /dfs6/pub/robertbt/WELibsmolData
 
 
-for L in 2 2.25 2.5 2.75 3 3.25 3.5 3.75
+for L in 2 2.25 2.5 2.75
 do
 for n in {1..30}
 do

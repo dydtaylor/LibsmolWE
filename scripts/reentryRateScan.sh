@@ -37,7 +37,7 @@ cd ..
 
 #make
 
-mkdir $SAVEPATH/$FULLNAME
+mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "11c\entryRate	${entryRate}
 " "dynamicsParams.txt"
@@ -57,7 +57,7 @@ cd ..
 sed -i "10c\entryBit 0
 " "dynamicsParams.txt"
 
-cd /dfs3/pub/robertbt/WELibsmolData
+cd /dfs6/pub/robertbt/WELibsmolData
 
 for runNo in $2;
 do

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rho=8
+rho=$5
 
 cd ..
 
@@ -26,7 +26,7 @@ cd scripts
 	for runNo in  $2
 	do
 
-		for nPart in  {30..100..5};
+		for nPart in  {30..50..5};
 		do
 
 			SAVEPATH=/pub/robertbt/WELibsmolData
@@ -35,7 +35,7 @@ cd scripts
 			./makePubs.pl $FULLNAME ${runNo}
 			cd ..
 
-			mkdir $SAVEPATH/$FULLNAME
+			mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "8c\nPart	${nPart}
 " "dynamicsParams.txt"
@@ -53,7 +53,7 @@ sed -i "5c\nBins ${nPart}
 	for runNo in  $2
 	do
 
-		for nPart in  {105..200..5};
+		for nPart in  {55..200..5};
 		do
 
 			SAVEPATH=/pub/robertbt/WELibsmolData
@@ -62,7 +62,7 @@ sed -i "5c\nBins ${nPart}
 			./makePubs.pl $FULLNAME ${runNo}
 			cd ..
 
-			mkdir $SAVEPATH/$FULLNAME
+			mkdir -p $SAVEPATH/$FULLNAME
 
 sed -i "8c\nPart	${nPart}
 " "dynamicsParams.txt"
@@ -70,6 +70,7 @@ sed -i "5c\nBins ${nPart}
 " "WEParams.txt"
 
 			./seedchange ${runNo} 0
+			./binMaker $nPart 1 3
 			cp weSmoldyn WEParams.txt seedchange dynamicsParams.txt binDefinitions2.txt binParams.txt corralsParams.txt ISEED scripts/pubs/$FULLNAME.pub $SAVEPATH/$FULLNAME
 
 		cd scripts
@@ -82,12 +83,12 @@ cd ..
 sed -i "12c\densitybit 0
 " "dynamicsParams.txt"
 
-cd /dfs3/pub/robertbt/WELibsmolData
+cd /dfs6/pub/robertbt/WELibsmolData
 
 
 	for runNo in  $2;
 	do
-		for nPart in  {30..100..5};
+		for nPart in  {30..50..5};
 		do
 			FULLNAME=$1.$d.ConstantDensity.rho${rho}.n${nPart}
 			cd $FULLNAME
@@ -99,7 +100,7 @@ cd /dfs3/pub/robertbt/WELibsmolData
 
 	for runNo in  $2;
 	do
-		for nPart in  {105..200..5};
+		for nPart in  {55..200..5};
 		do
 			FULLNAME=$1.$d.ConstantDensity.rho${rho}.n${nPart}
 			cd $FULLNAME

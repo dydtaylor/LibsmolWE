@@ -12,17 +12,16 @@
 	my $file_name=$run_name_Prefix . ".pub";
 	my $run_numbers=$ARGV[1];
 	my $tempDirPrefix="/tmp/robertbt/${run_name_Prefix}";
-	my $saveDirPrefix="/dfs3/pub/robertbt/WELibsmolData/${run_name_Prefix}";
+	my $saveDirPrefix="/dfs6/pub/robertbt/WELibsmolData/${run_name_Prefix}";
     #open file for writing and print the following
     open(FOOD, ">pubs/$file_name" );
     print FOOD << "EOF";
 #!/bin/bash
 #\$ -N $run_name_Prefix
-#\$ -q rxn,free64,pub64
-#\$ -ckpt restart
+#\$ -q rxn,pub64
 #\$ -r y
-#\$ -e $run_name_Prefix.\$SGE_TASK_ID.err
-#\$ -o $run_name_Prefix.\$SGE_TASK_ID.log
+#\$ -e $run_name_Prefix.#\$SGE_TASK_ID.err
+#\$ -o $run_name_Prefix.#\$SGE_TASK_ID.log
 #\$ -t 1-$run_numbers
 
 run_name=$run_name_Prefix.runNo\$SGE_TASK_ID
@@ -35,10 +34,11 @@ saveDir=$saveDirPrefix
 	echo \$run_name.Time
 
 	##Make temp folders for execution
-		mkdir /tmp/robertbt
-		mkdir \$tempDir 
+		mkdir -p /tmp/robertbt
+		mkdir -p \$tempDir 
 
 ##Copy files from the save directory to the temp folder
+		ls \$saveDir
 		cd \$saveDir
 		cp weSmoldyn seedchange WEParams.txt corralsParams.txt dynamicsParams.txt binDefinitions.txt binParams.txt ISEED $run_name_Prefix.pub \$tempDir
 		if [ -e savestate\$SGE_TASK_ID.txt ];
@@ -48,6 +48,7 @@ saveDir=$saveDirPrefix
 
 
 ##Execute code
+		ls \$saveDir
 		cd \$tempDir
 		LD_LIBRARY_PATH=/data/users/robertbt/lib
 		export LD_LIBRARY_PATH
@@ -75,21 +76,27 @@ saveDir=$saveDirPrefix
 ##Move Output to the save directory
 		mv savestate.txt savestate\$SGE_TASK_ID.txt
 		mv mCountsWeighted.txt mCountsWeighted\$SGE_TASK_ID.txt
+		mv bin1.txt bin1\$SGE_TASK_ID.txt
+		mv monomerLocs.txt monomerLocs\$SGE_TASK_ID.txt
+		mv dimerLocs.txt dimerLocs\$SGE_TASK_ID.txt
 		cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SGE_TASK_ID.txt ISEED mCountsWeighted\$SGE_TASK_ID.txt bin1\$SGE_TASK_ID.txt monomerLocs\$SGE_TASK_ID.txt dimerLocs\$SGE_TASK_ID.txt \$saveDir
 
 		if [ -e ksOut.txt ];
 		then
-			cp ksOut.txt \$saveDir
+			mv ksOut.txt ksOut\$SGE_TASK_ID.txt
+			cp ksOut\$SGE_TASK_ID.txt \$saveDir
 		fi
 
 		if [ -e dualKS.txt ];
 		then
-			cp dualKS.txt \$saveDir
+			mv dualKS.txt dualKS\$SGE_TASK_ID.txt
+			cp dualKS\$SGE_TASK_ID.txt \$saveDir
 		fi
 
 		cd ..
 	##Cleanup temp directory
 		rm -rf /tmp/robertbt/\$run_name
+		ls \$saveDir
 		cd \$saveDir
 		echo Finished at `date`
 	fi
