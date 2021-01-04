@@ -218,10 +218,11 @@ double fluxes(){
 
 	// loop through replicas in flux bin and delete them. Replace indices with empty non-flux indices
 	if(nFlux>0){
-		if{paramsWe.replaceFluxSims==1}{
+		if(paramsWe.replaceFluxSims==1){
 		for(iReps = 0; iReps < Reps.binContentsMax[paramsWe.fluxBin];iReps++){
+			fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
 			smolFreeSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
-			buildSingleSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
+			buildSingleSim(Reps.binContents[iReps][paramsWe.fluxBin]);
 		}
 		}
 		else{

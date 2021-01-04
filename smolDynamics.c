@@ -354,7 +354,7 @@ void buildEmptySim(int simOut){
 !---------------------------------------------------------------------------------------------------------------------
 */
 	
-	int nList, nMol,nCorrals,iCorrals;
+	int nCorrals,iCorrals;
 	//FILE *nulldev = fopen(NULLDEVICE, "w");
 	
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
@@ -460,7 +460,6 @@ void buildSingleSim(int simOut){
 !			Identical to initialDist, but the loop across sims is instead replaced with a single index specified in the function input.
 !---------------------------------------------------------------------------------------------------------------------
 */
-	int jSim;
 	int nCorrals, iCorrals;
 	double lowBounds[] = {-paramsDe.worldLength/2,-paramsDe.worldLength/2};
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
