@@ -40,6 +40,7 @@ struct paramsWeightedEnsemble{
 	unsigned int nBins;
 	int fluxBin;
 	unsigned int nInit;
+	unsigned int replaceFluxSims;
 	//double binDefs[NBINSMAX];
 } ;
 

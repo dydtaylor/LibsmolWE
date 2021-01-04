@@ -5,3 +5,4 @@ tauMax		12000
 nBins 20
 fluxBin	0
 ksNT		300
+replaceFluxSims	1

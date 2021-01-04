@@ -218,6 +218,13 @@ double fluxes(){
 
 	// loop through replicas in flux bin and delete them. Replace indices with empty non-flux indices
 	if(nFlux>0){
+		if{paramsWe.replaceFluxSims==1}{
+		for(iReps = 0; iReps < Reps.binContentsMax[paramsWe.fluxBin];iReps++){
+			smolFreeSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
+			buildSingleSim(Reps.sims[Reps.binContents[iReps][paramsWe.fluxBin]]);
+		}
+		}
+		else{
 		for(iReps = nFlux -1; iReps >=0; iReps--){
 				fluxOut += Reps.weights[Reps.binContents[iReps][paramsWe.fluxBin]];
 			
@@ -255,6 +262,7 @@ double fluxes(){
 				}
 
 		}
+		}
 	}
 	for(iReps = 0; iReps < nFlux; iReps++){
 				Reps.iSimMax--;
@@ -269,7 +277,7 @@ double fluxes(){
 	}
 
 	// Re-weight the remaining replicas
-	if(fluxOut != 0){
+	if(fluxOut != 0 && paramsWe.replaceFluxSims != 1){
 			for(iSim = 0; iSim < Reps.iSimMax; iSim++){
 				Reps.weights[iSim] = Reps.weights[iSim]/(weightSum-fluxOut);
 			}
@@ -277,7 +285,6 @@ double fluxes(){
 
 	return fluxOut;
 }
-
 void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
 	char tmpStr[32];
 	int jBin;
@@ -289,6 +296,7 @@ void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.nBins);
 	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.fluxBin);
 	fscanf(WEFile,"%s %i" ,tmpStr, &fluxCDF.nT);
+	fscanf(WEFile,"%s %i", tmpStr, &paramsWe.replaceFluxSims);
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.dt);
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.worldLength);
 	fscanf(DEFile, "%s %lf", tmpStr, &paramsDe.roiR);
