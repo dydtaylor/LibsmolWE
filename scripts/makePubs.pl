@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
 # create pub files to submit jobs to pbs
+#December 10, 2020, updating for use on HPC3 rather than HPC.
+#This involves changing from SGE to SLURM
 
 # make pubs ###########################################################
 
@@ -17,15 +19,19 @@
     open(FOOD, ">pubs/$file_name" );
     print FOOD << "EOF";
 #!/bin/bash
-#\$ -N $run_name_Prefix
-#\$ -q rxn,pub64
-#\$ -r y
-#\$ -e $run_name_Prefix.#\$SGE_TASK_ID.err
-#\$ -o $run_name_Prefix.#\$SGE_TASK_ID.log
-#\$ -t 1-$run_numbers
+#SBATCH --job-name=$run_name_Prefix
+#SBATCH -A elread_lab
+#SBATCH -p standard
+#SBATCH --output=$run_name_Prefix.%a.log
+#SBATCH --error=$run_name_Prefix.%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=72:00:00
+#SBATCH --array=1-$run_numbers
 
-run_name=$run_name_Prefix.runNo\$SGE_TASK_ID
-tempDir=$tempDirPrefix.runNo\$SGE_TASK_ID
+run_name=$run_name_Prefix.runNo\$SLURM_ARRAY_TASK_ID
+tempDir=$tempDirPrefix.runNo\$SLURM_ARRAY_TASK_ID
 saveDir=$saveDirPrefix
 ##If statement checks to make sure that the simulation has not previously finished and has not previously started.
 
@@ -34,69 +40,61 @@ saveDir=$saveDirPrefix
 	echo \$run_name.Time
 
 	##Make temp folders for execution
-		mkdir -p /tmp/robertbt
-		mkdir -p \$tempDir 
+		mkdir /tmp/robertbt
+		mkdir \$tempDir 
 
 ##Copy files from the save directory to the temp folder
-		ls \$saveDir
 		cd \$saveDir
 		cp weSmoldyn seedchange WEParams.txt corralsParams.txt dynamicsParams.txt binDefinitions.txt binParams.txt ISEED $run_name_Prefix.pub \$tempDir
-		if [ -e savestate\$SGE_TASK_ID.txt ];
+		if [ -e savestate\$SLURM_ARRAY_TASK_ID.txt ];
 		then
-			cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SGE_TASK_ID.txt ISEED mCountsWeighted.txt bin1.txt monomerLocs.txt dimerLocs.txt seedchange \$tempDir
+			cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SLURM_ARRAY_TASK_ID.txt ISEED mCountsWeighted.txt bin1.txt monomerLocs.txt dimerLocs.txt seedchange \$tempDir
 		fi
 
 
 ##Execute code
-		ls \$saveDir
 		cd \$tempDir
-		LD_LIBRARY_PATH=/data/users/robertbt/lib
+		LD_LIBRARY_PATH=/data/homezvol2/robertbt/lib
 		export LD_LIBRARY_PATH
 		echo Running on host `hostname`
 		echo Time is `date`
 		echo Directory is `pwd`
 
 ##ISEED Changing
-		./seedchange \$SGE_TASK_ID 0
+		./seedchange \$SLURM_ARRAY_TASK_ID 0
 
 ## Run executable
-		if [ -e savestate\$SGE_TASK_ID.txt ];
+		if [ -e savestate\$SLURM_ARRAY_TASK_ID.txt ];
 		then
 			echo Savestate Found
-			mv savestate\$SGE_TASK_ID.txt savestate.txt
+			mv savestate\$SLURM_ARRAY_TASK_ID.txt savestate.txt
 			./weSmoldyn \$run_name.Out \$run_name.Flux \$run_name.seed 0 \$run_name.Time 1 &>/dev/null
 		fi
 
-		if [ ! -e savestate\$SGE_TASK_ID.txt ]
+		if [ ! -e savestate\$SLURM_ARRAY_TASK_ID.txt ]
 		then
 			echo Savestate Not Found
 			./weSmoldyn \$run_name.Out \$run_name.Flux \$run_name.seed 0 \$run_name.Time 0 &>/dev/null
 		fi
 
 ##Move Output to the save directory
-		mv savestate.txt savestate\$SGE_TASK_ID.txt
-		mv mCountsWeighted.txt mCountsWeighted\$SGE_TASK_ID.txt
-		mv bin1.txt bin1\$SGE_TASK_ID.txt
-		mv monomerLocs.txt monomerLocs\$SGE_TASK_ID.txt
-		mv dimerLocs.txt dimerLocs\$SGE_TASK_ID.txt
-		cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SGE_TASK_ID.txt ISEED mCountsWeighted\$SGE_TASK_ID.txt bin1\$SGE_TASK_ID.txt monomerLocs\$SGE_TASK_ID.txt dimerLocs\$SGE_TASK_ID.txt \$saveDir
+		mv savestate.txt savestate\$SLURM_ARRAY_TASK_ID.txt
+		mv mCountsWeighted.txt mCountsWeighted\$SLURM_ARRAY_TASK_ID.txt
+		cp \$run_name.Out \$run_name.Flux \$run_name.seed \$run_name.Time savestate\$SLURM_ARRAY_TASK_ID.txt ISEED mCountsWeighted\$SLURM_ARRAY_TASK_ID.txt bin1\$SLURM_ARRAY_TASK_ID.txt monomerLocs\$SLURM_ARRAY_TASK_ID.txt dimerLocs\$SLURM_ARRAY_TASK_ID.txt \$saveDir
 
 		if [ -e ksOut.txt ];
 		then
-			mv ksOut.txt ksOut\$SGE_TASK_ID.txt
-			cp ksOut\$SGE_TASK_ID.txt \$saveDir
+			cp ksOut.txt \$saveDir
 		fi
 
 		if [ -e dualKS.txt ];
 		then
-			mv dualKS.txt dualKS\$SGE_TASK_ID.txt
-			cp dualKS\$SGE_TASK_ID.txt \$saveDir
+			cp dualKS.txt \$saveDir
 		fi
 
 		cd ..
 	##Cleanup temp directory
 		rm -rf /tmp/robertbt/\$run_name
-		ls \$saveDir
 		cd \$saveDir
 		echo Finished at `date`
 	fi
