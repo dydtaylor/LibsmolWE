@@ -11,13 +11,14 @@ void copySim1(int simIn, int simOut){
 	double highBounds[] = {paramsDe.worldLength/2, paramsDe.worldLength/2};
 	double botLeftCornerRect[] = {-paramsDe.worldLength/2, -paramsDe.worldLength/2, paramsDe.worldLength};
 	double topRightCornerRect[] = {paramsDe.worldLength/2, paramsDe.worldLength/2, -paramsDe.worldLength};
-	double roiParams[] = {0.0, 0.0, 1, 30};
+	double roiParams[] = {0.0, 0.0, paramsDe.roiR, 30};
 	double insideRoi[] = {0.0, 0.0};
 	
+	smolFreeSim(Reps.sims[simOut]);
 	Reps.sims[simOut] = smolNewSim(2, lowBounds, highBounds);
 	smolSetRandomSeed(Reps.sims[simOut],genrand_int31());
 	smolSetGraphicsParams(Reps.sims[simOut], "none", 1, 0);
-	smolSetSimTimes(Reps.sims[simOut], 0, 10000, paramsDe.dt); //Reps.sims[simIn]->time is another option
+	smolSetSimTimes(Reps.sims[simOut], 0, SMOLTIMEMAX, paramsDe.dt); //Reps.sims[simIn]->time is another option
 	smolAddSpecies(Reps.sims[simOut], "A", NULL);
 	smolSetSpeciesMobility(Reps.sims[simOut], "A", MSall, paramsDe.difC,0,0);
 	smolSetMaxMolecules(Reps.sims[simOut],paramsDe.nPart);
@@ -47,11 +48,3 @@ void copySim1(int simIn, int simOut){
 		//printf("Molecule %i Coords: %f %f \n",nMol, Reps.sims[simIn]->mols->live[0][nMol]->pos[0],Reps.sims[simIn]->mols->live[0][nMol]->pos[1]);
 	}
 }
-/* Potential function for copying sims through writing and reading file.
-void copySim2(simptr simIn, simptr simOut){
-	FILE *simFile;
-	simFile = fopen("simStore.txt","w");
-	writesim(simIn, simFile);
-	fclose(simFile);
-	simOut = smolPrepareSimFromFile(NULL, "simStore.txt", NULL);
-}*/

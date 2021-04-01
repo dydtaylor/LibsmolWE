@@ -1,1 +1,8 @@
-10 500 200 100000 25
+tau		50
+repsPerBin	200
+initialReps 	1000
+tauMax		12000
+nBins 20
+fluxBin	0
+ksNT		300
+replaceFluxSims	1

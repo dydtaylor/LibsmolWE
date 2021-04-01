@@ -1,6 +1,6 @@
 # WeSmol 
 
-The Weighted Ensemble for spatial rare event simulations in Smoldyn. One Paragraph of project description goes here
+The Weighted Ensemble for spatial rare event simulations in Smoldyn. The goal of this project is to build a framework that allows weighted ensemble rare event sampling to work with a variety of Smoldyn simulations through the libSmoldyn C library. This initial version is designed specifically for 2D evacuation reaction-diffusion events.
 
 ## Getting Started
 
