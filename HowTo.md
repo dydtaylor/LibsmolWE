@@ -2,9 +2,13 @@
 This will provide a basic guide to getting LibsmolWE running and producing data that was used in "Stochastic rare event simulation demonstrates receptor triggeringby kinetic segregation is influenced by oligomerization andclose-contact mechanics" (Taylor, Allard, Read 2021)
 
 1. First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html .
+	
 	a. You will need the complete distribution with source code, not the pre-compiled software.
+	
 	b. The version of Smoldyn used in the paper is Smoldyn 2.62. Major changes to Smoldyn that might impact these results would be how Smoldyn handles 2D molecular reactions, specifically A+A <-> B reactions. Steve Andrews mentioned in Chapter 2 of his SmolEmulate document, that reaction rate functions have "several problems, some dating back to [the] original 2004 algorithms and some in new algorithms".
+	
 	c. The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
+	
 	d. Installation should install the libsmoldyn, smoldyn, smoldynconfigre, libsmoldyn_static.a and libsmoldyn_shared.dylib libraries to the users local folder so that Smoldyn can be called as a library.
 	
 2. Update the makefile with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. This should create the executable "weSmoldyn".
