@@ -13,53 +13,96 @@ This will provide a basic guide to getting LibsmolWE running and producing data 
 	
 2. Update the makefile with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. This should create the executable "weSmoldyn".
 3. Update the parameters and bin definitions files. Specifically, these files are "binParams.txt", "corralsParams.txt", "dynamicsParams.txt", "WEParams.txt, "binDefinitions.txt".
+	
 	a. Brief explanation for each line in the parameters
+	
 		i. binDefinitions.txt: Contains the boundaries for each bin, given a WE order parameter of "number of molecules inside the ROI". The first number gives the left-most boundary for the first listed bin, the second number gives the upper boundary for the first listed bin / the lower boundary for the second listed bin, the third gives the upper boundary for the second listed bin / lower boundary for third listed bin, etc. WE is fairly robust to whichever bin definitions you intend to use, though definitions that allow for more replicas nearby the transient bins will tend to allow quicker convergence of flux values. A sample definition for 13 bins is included, and those definitions were used for all simulations where nPart = 256. Note the wide gap for the final bin, which is furthest from the transient bins.
+		
 		ii. binParams.txt
+			
 			custom: Whether or not the user intends to use the custom bins in "binDefinitions.txt". If this is 0 then these files are ignored. Publication value was 1.
+			
 			binDims: Number of dimensions for the order parameters. Currently this should only be set to binDims = 1.
+			
 			nBins: Clarifies the number of bins to use in the custom bins. This should be equal to n-1, where n is the number of lines of binDefinitions.txt
+		
 		iii. corralsParams.txt: Corrals are currently in an alpha version and as such that functionality is not currently used to produce data in any publications. Results from this functionality have NOT been confirmed through any brute force analysis / analytic analysis / other methods.
+			
 			corralsBit: 1 enables corrals functionality, 0 disables it.
+			
 			corralsWidth: Specifies the width of the corrals created. Corrals are squares tiled, with the center corral being a square with width corralsWidth centered at the origin.
+			
 			corralsRate: Specifies the probabilistic rate that molecules are allowed to pass through the corrals with.
+		
 		iv. dynamicsParams.txt
+			
 			dt: Timestep for Smoldyn dynamics simulations. dt = 0.000001 (10^-6) was used. Units of characteristic timescale of system (t*)
+			
 			worldL: Length of square domain, units of the characteristic length scale (L*) of system. Publication values ranged from 3 to 5.333.
+			
 			roiR: Radius of ROI, units of the characteristic length scale of the system (L*). Publication value was always 1.
+			
 			difM: Monomer diffusion coefficient. Units of L*^2/t*. Publication value was always 1.
+			
 			difD: Dimer diffusion coefficient. Units of L*^2/t*. Publication value was always 0.5.
+			
 			bindR: Binding radius of monomers. Units of L*. Publication value was 0.001 (10^-3)
+			
 			unbindK: Unbinding rate of dimers. Units of 1/t*. Publication values ranged from 10^-3 to 10^6.
+			
 			nPart: Maximum number of monomers in the system. Publication values ranged from 2 to 256.
+			
 			reactBit: Bit that enables (1) or disables (0) chemical reactions between monomers.
+			
 			entryBit: Bit that enables (1) or disables (0) probabilistic reentry from close contacts.
+			
 			entryRate: Probabilistic rate that molecules are allowed to enter into the ROI from outside the ROI. Publication values ranged from 0 to 1.
+
 			densityBit: When this value is > 0, the worldL given above will be ignored and recalculated based off of nPart (line 8) and density (line 13)
+			
 			density: When densityBit is > 0, this value is used to calculate a new world L based off of nPart. worldL = sqrt(nPart/density). Units of number of molecules per L*^2.
+			
 			monomerStart: If react bit is 1, replicas will either be initialized with purely monomeric (1) solutions with nPart monomers or purely dimeric (0) solutions with nPart/2 dimers.
+		
 		v. WEParams.txt
+			
 			tau: Gives the integer number of Smoldyn timesteps (dt in dynamicsParams.txt) to execute in between WE flux measurement / splitting + merging. Publication value was 50. Units of dt.
+			
 			repsPerBin: AKA mtarg. The number of replicas to maintain in each bin through the splitting / merging process. Publication values ranged from 100 to 200.
+			
 			initialReps: Number of unique replicas to initialize the WE simulation with. These replicas are drawn from a distribution where each molecule is uniformly distributed throughout the entire domain.
+			
 			tauMax: Maximum number of WE steps to use. Only used if FIXEDTIME is defined as 1 in weSmoldyn.h, otherwise simulations run until either the KS tests are passed (see KSTest in weSmoldyn.c) or 250000 seconds of combined computation time has been used. Publication value was 12000, though FIXEDTIME was 0 in all sims for publication.
+			
 			nBins: Primarily useful if there are no custom bin definitions. When there aren't custom bin definitions, this should be equal to nPart in dynamicsParams.txt.
+			
 			fluxBin: Specifies which bin should be used for measuring flux into. This was always 0 in publication.
+			
 			ksNT: How many WE steps should pass before the first KS test is used. This value was always 300 in publication.
+			
 			replaceFluxSims: If (1), then a replica that enters the flux bin will be replaced with a new replica initialized from the starting distribution (uniform molecule distribution). If (0), then a replica that enters the flux bin will have its weight proportionally redistributed to replicas that did not enter the flux bin. This value was 0 for all publication simulations EXCEPT for the close contacts (entryBit = 1 in dynamicsParams.txt), in which case the value was 1.
+
 4. After updating parameters, LibsmolWE can now be run using the following command line arguments:
+			
 			argv1: ending simfile (Somewhat of a misnomer, gives weight distribution across bins at given timesteps)
+			
 			argv2: flux file. Appended to every WE timestep with the flux measured in that timestep
+			
 			argv3: Seed/error file. Outputs the ISEED used + miscellaneous errors that I wanted to output here.
+			
 			argv4: Save / replace RNG bit. If this is 1 then the RNG seed is saved / ISEED does not increment. If 0
 					then it increments according to twister.c
+			
 			argv5: Execution time file. Outputs, in order: 1. Time spent creating initial distribution 2. All time
 					spent in the WE splitting/merging 3. All time spent in Smoldyn dynamics 4. Total time of 
 					WE/Dyanamics 5. Time spent creating the savestate
+			
 			argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then
 					this initializes a new WE sim.
 					
+	
 	The files included in this distribution will allow you to execute weSmoldyn without changing any of the parameters to obtain data for L = 5.333 and N = 256 monomer-only simulations. The terminal command is as follows:
+	
 	./weSmoldyn sampleOut.txt sampleFlux.txt sampleSeed.txt 0 sampletime.txt 0
 	
 	Smoldyn outputs a lot of junk to stdout that is not useful outside of debugging purposes. For data collection, I would recommend suppressing that output by including &>/dev/null at the end of the terminal command. However, verifying that Smoldyn is doing what you want it to is useful, in which case I would recommend using a debugger like lldb and creating a breakpoint at smolDynamics.c:123 (alternatively, smolDynamics.c:564 if you want one copied during the splitting), where the smolDisplaySim command is. This will provide all details of the specific replica initialized, which should be identical to the other initialized replicas. Debugging Smoldyn features in LibsmolWE is cumbersome, so I would recommend using this smolDisplaySim output as a comparison tool in combination with vanilla Smoldyn / Libsmol simulations.
