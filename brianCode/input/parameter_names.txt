@@ -1,8 +1,0 @@
-kon 
-koff
-L0
-L
-Number of particles
-Smoldyn time step
-difcm
-difcd
