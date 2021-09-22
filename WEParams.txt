@@ -2,7 +2,7 @@ tau		50
 repsPerBin	200
 initialReps 	1000
 tauMax		12000
-nBins 20
+nBins 	30
 fluxBin	0
 ksNT		300
-replaceFluxSims	1
+replaceFluxSims	0
