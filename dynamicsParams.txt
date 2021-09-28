@@ -4,11 +4,11 @@ roiR	1
 difM	1
 difD	0.5
 bindR	0.01
-unbindK	1000000
-nPart	256
+unbindK	100
+nPart	57
 reactBit	0
 entryBit 0
 entryRate	1.0
-densityBit	1
-density 9
+densityBit	0
+density 2
 monomerStart 1

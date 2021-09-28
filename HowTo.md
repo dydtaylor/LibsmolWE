@@ -72,7 +72,7 @@ This will provide a basic guide to getting LibsmolWE running and producing data 
 			
 			initialReps: Number of unique replicas to initialize the WE simulation with. These replicas are drawn from a distribution where each molecule is uniformly distributed throughout the entire domain.
 			
-			tauMax: Maximum number of WE steps to use. Only used if FIXEDTIME is defined as 1 in weSmoldyn.h, otherwise simulations run until either the KS tests are passed (see KSTest in weSmoldyn.c) or 250000 seconds of combined computation time has been used. Publication value was 12000, though FIXEDTIME was 0 in all sims for publication.
+			tauMax: Maximum number of WE steps to use. Only used if FIXEDTIME is defined as 1 in weSmoldyn.h, otherwise simulations run until either the KS tests are passed (see KSTest in weSmoldyn.c) or 250000 seconds of combined computation time has been used. Publication value was 12000, though FIXEDTIME was 0 in all sims for publication. EVEN WITH FIXEDTIME = 0, THIS PARAMETER IS STILL USED: tauMax defines some "default burn in" times that the system will wait for before beginning measurements. For example, when measuring monomerization fractions, the "mCountsWeighted" constitutes a running average that starts after 1/2 of this time has passed.
 			
 			nBins: Primarily useful if there are no custom bin definitions. When there aren't custom bin definitions, this should be equal to nPart in dynamicsParams.txt.
 			
@@ -100,6 +100,27 @@ This will provide a basic guide to getting LibsmolWE running and producing data 
 			argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then
 					this initializes a new WE sim.
 					
+					
+WE Smoldyn outputs the following files:
+	
+	"Sim File" aka filename given as argv1. This is a cursory overview of how the weight in the WE sim evolves. Output is in series of lines for WE step (tau), then it lists the bin number and the weight within that bin for each bin used. The first 1000 tau steps are always included. After the first 1000 tau steps, it makes a new entry after 0.1% of the current "maximum tau step" has elapsed. Because the maximum tau step can change when the #FIXEDTIME macro is 0, the increments between steps increases the longer the sim runs.
+			Currently, the sim file does not output any information not included by "timeSeries.txt"
+	
+	"Flux file" A line-by-line time series of the flux measured at that given WE step. Each line contains the summed flux measured from each replica that evacuated during that steps.
+	
+	"Seed file" Outputs the RNG seed (ISEED) used to generate the data. Clarifies what the flux bin was for the data.
+	
+	"Time file" Line by line, outputs (in seconds) 1. Time spent creating initial distribution 2. All time spent in the WE splitting/merging 3. All time spent in Smoldyn dynamics 4. Total time of WE/Dyanamics 5. Time spent creating the savestate
+	
+	"savestate.txt": Gives a complete description of the entire WE system at the ending WE step. First line, iSimMax, tells you how many replicas exist in the system. Then, for each replica, it lists: the weight associated with that replica ("Weight w" where "w" is a floating point value), the number of monomers in that replica ("Monomers n" where "n" is an integer), then ordered pairs of all the monomer locations ("X, Y" where x and y are the floating point coordinates in 2d). Finally, it lists how many dimers are in the system ("Dimers m" where "m" is an integer) followed by ordered pairs of all the dimer locations ("X, Y" where x and y are the floating point coordinates in 2d).
+	
+	"timeSeries.txt": Each line is in the following format: "B# W mFrac tau", B# is the bin number, W is the total weight inside that bin, mFrac is the weight-adjusted monomerization fraction of replicas inside that bin, and tau is the WE step that the 3 prior numbers were measured at.
+	
+	"mCountsWeighted.txt": The first line gives the weighted number of monomers measured (SUM(weight_i * nMonomers_i)), the number of dimers measured (SUM(weight_i * nDimers_i)), and the total weight measured (SUM(weight_i)) beginning at a timestep tauMax/2. The sequential lines give a running sum of the previous line with the weighted number of monomers, weighted number of dimers, and total weight measured at that time step. To calculate the monomerization fraction from one of the lines, use nMonomers_weighted / (nPart * total_weight), i.e. (First entry of the line) / (3rd entry of the same line * nPart)
+	
+	ksOut.txt: Gives the calculations used to measure the KS statistic of a run. This should consist of 5 line blocks listing the maximum flux measured to create the KS statistic, the empirical histogram for the middle third of flux data, the empirical histogram for the final third of flux data, the KS statistic measured from these histograms, and the number of WE steps used for the histogram (nT). a ksStat of 2 means that the data did not have enough non-0 measurements. (line 33, #NNZMIN in weSmoldyn.h)
+	
+	dualKS.txt: Same as ksOut.txt except it modifies the data used to create the histograms slightly. It removes a number of "0s" from the 0 histogram bin equal to the minimum number of zeroes measured in either third. E.g. if the middle third of data has 1000 measurements and 500 of them are 0s, and the final third of data has 1000 measurements and 300 of them are 0s, then the file gives a KSstat comparing 700 measurements from the middle third and 700 measurements from the final third, where the 300 measurements that are omitted are all 0s. There is an additional line included below nT that gives the number of zeroes counted from the middle and final third as well as confirmation of the number of measurements removed to make the dksStat.
 	
 	The files included in this distribution will allow you to execute weSmoldyn without changing any of the parameters to obtain data for L = 5.333 and N = 256 monomer-only simulations. The terminal command is as follows:
 	
