@@ -1,6 +1,6 @@
 Quickstart guide for getting LibsmolWE running
 
-1. First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html .
+1. First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html.
 	
 	a. You will need the complete distribution with source code, not the pre-compiled software.
 	
