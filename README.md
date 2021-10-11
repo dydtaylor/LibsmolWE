@@ -6,7 +6,7 @@ First, the user will need to install Smoldyn from [http://www.smoldyn.org/downlo
 	
 * You will need the complete distribution with source code, not the pre-compiled software.
 	
-* The version of Smoldyn used in the paper is Smoldyn 2.62. Major changes to Smoldyn that might impact these results would be how Smoldyn handles 2D molecular reactions, specifically A+A <-> B reactions. Steve Andrews mentioned in Chapter 2 of his SmolEmulate document, that reaction rate functions have "several problems, some dating back to [the] original 2004 algorithms and some in new algorithms".
+* The version of Smoldyn used in the paper is Smoldyn 2.62. The code is currently updated to work with Smoldyn 2.66.
 	
 * The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
 	
