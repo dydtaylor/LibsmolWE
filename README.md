@@ -97,21 +97,22 @@ Brief explanation for each line in the parameters
 
 After updating parameters and exporting LD_LIBRARY_PATH, LibsmolWE can now be run using the following command line arguments:
 			
-			argv1: ending simfile (Somewhat of a misnomer, gives weight distribution across bins at given timesteps)
+1. argv1: ending simfile (Somewhat of a misnomer, gives weight distribution across bins at given timesteps)
 			
-			argv2: flux file. Appended to every WE timestep with the flux measured in that timestep
+1. argv2: flux file. Appended to every WE timestep with the flux measured in that timestep
 			
-			argv3: Seed/error file. Outputs the ISEED used + miscellaneous errors that I wanted to output here.
+1. argv3: Seed/error file. Outputs the ISEED used + miscellaneous errors that I wanted to output here.
 			
-			argv4: Save / replace RNG bit. If this is 1 then the RNG seed is saved / ISEED does not increment. If 0
-					then it increments according to twister.c
+1. argv4: Save / replace RNG bit. If this is 1 then the RNG seed is saved / ISEED does not increment. If 0	then it increments according to twister.c
 			
-			argv5: Execution time file. Outputs, in order: 1. Time spent creating initial distribution 2. All time
-					spent in the WE splitting/merging 3. All time spent in Smoldyn dynamics 4. Total time of 
-					WE/Dyanamics 5. Time spent creating the savestate
-			
-			argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then
-					this initializes a new WE sim.
+1. argv5: Execution time file. Outputs, in order: 
+	1. Time spent creating initial distribution 
+	1. All time spent in the WE splitting/merging 
+	1. All time spent in Smoldyn dynamics 
+	1. Total time of WE/Dyanamics 
+	1. Time spent creating the savestate
+
+1. argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then this initializes a new WE sim.
 					
 					
 WE Smoldyn outputs the following files:
