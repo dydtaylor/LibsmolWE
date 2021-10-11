@@ -113,6 +113,12 @@ After updating parameters and exporting LD_LIBRARY_PATH, LibsmolWE can now be ru
 	1. Time spent creating the savestate
 
 1. argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then this initializes a new WE sim.
+
+The files included in this distribution will allow you to execute weSmoldyn without changing any of the parameters to obtain data for L = 5.333 and N = 256 monomer-only simulations. The terminal command is as follows:
+	
+	./weSmoldyn sampleOut.txt sampleFlux.txt sampleSeed.txt 0 sampletime.txt 0
+
+Smoldyn outputs a lot of junk to stdout that is not useful outside of debugging purposes. For data collection, I would recommend suppressing that output by including &>/dev/null at the end of the terminal command used to execute WESmoldyn. However, verifying that Smoldyn is doing what you want it to is useful, in which case I would recommend using a debugger like lldb and creating a breakpoint at smolDynamics.c:123 (alternatively, smolDynamics.c:564 if you want one copied during the splitting), where the smolDisplaySim command is. This will provide all details of the specific replica initialized, which should be identical to the other initialized replicas. Debugging Smoldyn features in LibsmolWE is cumbersome, so I would recommend using this smolDisplaySim output as a comparison tool in combination with vanilla Smoldyn / Libsmol simulations.
 					
 # Output				
 WE Smoldyn outputs the following files:
@@ -135,10 +141,6 @@ WE Smoldyn outputs the following files:
 	
 * dualKS.txt: Same as ksOut.txt except it modifies the data used to create the histograms slightly. It removes a number of "0s" from the 0 histogram bin equal to the minimum number of zeroes measured in either third. E.g. if the middle third of data has 1000 measurements and 500 of them are 0s, and the final third of data has 1000 measurements and 300 of them are 0s, then the file gives a KSstat comparing 700 measurements from the middle third and 700 measurements from the final third, where the 300 measurements that are omitted are all 0s. There is an additional line included below nT that gives the number of zeroes counted from the middle and final third as well as confirmation of the number of measurements removed to make the dksStat.
 	
-The files included in this distribution will allow you to execute weSmoldyn without changing any of the parameters to obtain data for L = 5.333 and N = 256 monomer-only simulations. The terminal command is as follows:
-	
-	./weSmoldyn sampleOut.txt sampleFlux.txt sampleSeed.txt 0 sampletime.txt 0
-	
-Smoldyn outputs a lot of junk to stdout that is not useful outside of debugging purposes. For data collection, I would recommend suppressing that output by including &>/dev/null at the end of the terminal command. However, verifying that Smoldyn is doing what you want it to is useful, in which case I would recommend using a debugger like lldb and creating a breakpoint at smolDynamics.c:123 (alternatively, smolDynamics.c:564 if you want one copied during the splitting), where the smolDisplaySim command is. This will provide all details of the specific replica initialized, which should be identical to the other initialized replicas. Debugging Smoldyn features in LibsmolWE is cumbersome, so I would recommend using this smolDisplaySim output as a comparison tool in combination with vanilla Smoldyn / Libsmol simulations.
+Smoldyn outputs a lot of junk to stdout that is not useful outside of debugging purposes. For data collection, I would recommend suppressing that output by including &>/dev/null at the end of the terminal command used to execute WESmoldyn. However, verifying that Smoldyn is doing what you want it to is useful, in which case I would recommend using a debugger like lldb and creating a breakpoint at smolDynamics.c:123 (alternatively, smolDynamics.c:564 if you want one copied during the splitting), where the smolDisplaySim command is. This will provide all details of the specific replica initialized, which should be identical to the other initialized replicas. Debugging Smoldyn features in LibsmolWE is cumbersome, so I would recommend using this smolDisplaySim output as a comparison tool in combination with vanilla Smoldyn / Libsmol simulations.
 	
 To calculate the evacuation time / MFPT from the flux, the formula is given by the Hill relation, MFPT = 1 / mean(flux). It is common practice to discard the first few (1/4 to 1/2 of the data, though discarding less may be fine) flux measurements to account for shifts from the initial distribution to the non-equilibrium steady-state distribution of weights obtained during the WE simulation.
