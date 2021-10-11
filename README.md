@@ -25,11 +25,11 @@ Before running weSmoldyn, set the LD_LIBRARY_PATH variable to the directory wher
 
  Update the parameters and bin definitions files. Specifically, these files are "binParams.txt", "corralsParams.txt", "dynamicsParams.txt", "WEParams.txt, "binDefinitions.txt".
 	
-a. Brief explanation for each line in the parameters
+Brief explanation for each line in the parameters
 	
-i. binDefinitions.txt: Contains the boundaries for each bin, given a WE order parameter of "number of molecules inside the ROI". The first number gives the left-most boundary for the first listed bin, the second number gives the upper boundary for the first listed bin / the lower boundary for the second listed bin, the third gives the upper boundary for the second listed bin / lower boundary for third listed bin, etc. WE is fairly robust to whichever bin definitions you intend to use, though definitions that allow for more replicas nearby the transient bins will tend to allow quicker convergence of flux values. A sample definition for 13 bins is included, and those definitions were used for all simulations where nPart = 256. Note the wide gap for the final bin, which is furthest from the transient bins.
+1. binDefinitions.txt: Contains the boundaries for each bin, given a WE order parameter of "number of molecules inside the ROI". The first number gives the left-most boundary for the first listed bin, the second number gives the upper boundary for the first listed bin / the lower boundary for the second listed bin, the third gives the upper boundary for the second listed bin / lower boundary for third listed bin, etc. WE is fairly robust to whichever bin definitions you intend to use, though definitions that allow for more replicas nearby the transient bins will tend to allow quicker convergence of flux values. A sample definition for 13 bins is included, and those definitions were used for all simulations where nPart = 256. Note the wide gap for the final bin, which is furthest from the transient bins.
 		
-ii. binParams.txt
+1. binParams.txt
 			
 custom: Whether or not the user intends to use the custom bins in "binDefinitions.txt". If this is 0 then these files are ignored. Publication value was 1.
 			
@@ -37,7 +37,7 @@ binDims: Number of dimensions for the order parameters. Currently this should on
 			
 nBins: Clarifies the number of bins to use in the custom bins. This should be equal to n-1, where n is the number of lines of binDefinitions.txt
 		
-iii. corralsParams.txt: Corrals are currently in an alpha version and as such that functionality is not currently used to produce data in any publications. Results from this functionality have NOT been confirmed through any brute force analysis / analytic analysis / other methods.
+1. corralsParams.txt: Corrals are currently in an alpha version and as such that functionality is not currently used to produce data in any publications. Results from this functionality have NOT been confirmed through any brute force analysis / analytic analysis / other methods.
 			
 corralsBit: 1 enables corrals functionality, 0 disables it.
 			
@@ -45,7 +45,7 @@ corralsWidth: Specifies the width of the corrals created. Corrals are squares ti
 			
 corralsRate: Specifies the probabilistic rate that molecules are allowed to pass through the corrals with.
 		
-iv. dynamicsParams.txt
+1. dynamicsParams.txt
 			
 dt: Timestep for Smoldyn dynamics simulations. dt = 0.000001 (10^-6) was used. Units of characteristic timescale of system (t*)
 			
@@ -75,7 +75,7 @@ density: When densityBit is > 0, this value is used to calculate a new world L b
 			
 monomerStart: If react bit is 1, replicas will either be initialized with purely monomeric (1) solutions with nPart monomers or purely dimeric (0) solutions with nPart/2 dimers.
 		
-v. WEParams.txt
+1. WEParams.txt
 			
 tau: Gives the integer number of Smoldyn timesteps (dt in dynamicsParams.txt) to execute in between WE flux measurement / splitting + merging. Publication value was 50. Units of dt.
 			
