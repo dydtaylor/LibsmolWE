@@ -114,7 +114,7 @@ After updating parameters and exporting LD_LIBRARY_PATH, LibsmolWE can now be ru
 
 1. argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then this initializes a new WE sim.
 					
-					
+# Output				
 WE Smoldyn outputs the following files:
 	
 * "Sim File" aka filename given as argv1. This is a cursory overview of how the weight in the WE sim evolves. Output is in series of lines for WE step (tau), then it lists the bin number and the weight within that bin for each bin used. The first 1000 tau steps are always included. After the first 1000 tau steps, it makes a new entry after 0.1% of the current "maximum tau step" has elapsed. Because the maximum tau step can change when the #FIXEDTIME macro is 0, the increments between steps increases the longer the sim runs.	Currently, the sim file does not output any information not included by "timeSeries.txt"
@@ -139,6 +139,6 @@ The files included in this distribution will allow you to execute weSmoldyn with
 	
 	./weSmoldyn sampleOut.txt sampleFlux.txt sampleSeed.txt 0 sampletime.txt 0
 	
-	Smoldyn outputs a lot of junk to stdout that is not useful outside of debugging purposes. For data collection, I would recommend suppressing that output by including &>/dev/null at the end of the terminal command. However, verifying that Smoldyn is doing what you want it to is useful, in which case I would recommend using a debugger like lldb and creating a breakpoint at smolDynamics.c:123 (alternatively, smolDynamics.c:564 if you want one copied during the splitting), where the smolDisplaySim command is. This will provide all details of the specific replica initialized, which should be identical to the other initialized replicas. Debugging Smoldyn features in LibsmolWE is cumbersome, so I would recommend using this smolDisplaySim output as a comparison tool in combination with vanilla Smoldyn / Libsmol simulations.
+Smoldyn outputs a lot of junk to stdout that is not useful outside of debugging purposes. For data collection, I would recommend suppressing that output by including &>/dev/null at the end of the terminal command. However, verifying that Smoldyn is doing what you want it to is useful, in which case I would recommend using a debugger like lldb and creating a breakpoint at smolDynamics.c:123 (alternatively, smolDynamics.c:564 if you want one copied during the splitting), where the smolDisplaySim command is. This will provide all details of the specific replica initialized, which should be identical to the other initialized replicas. Debugging Smoldyn features in LibsmolWE is cumbersome, so I would recommend using this smolDisplaySim output as a comparison tool in combination with vanilla Smoldyn / Libsmol simulations.
 	
-	To calculate the evacuation time / MFPT from the flux, the formula is given by the Hill relation, MFPT = 1 / mean(flux). It is common practice to discard the first few (1/4 to 1/2 of the data, though discarding less may be fine) flux measurements to account for shifts from the initial distribution to the non-equilibrium steady-state distribution of weights obtained during the WE simulation.
+To calculate the evacuation time / MFPT from the flux, the formula is given by the Hill relation, MFPT = 1 / mean(flux). It is common practice to discard the first few (1/4 to 1/2 of the data, though discarding less may be fine) flux measurements to account for shifts from the initial distribution to the non-equilibrium steady-state distribution of weights obtained during the WE simulation.
