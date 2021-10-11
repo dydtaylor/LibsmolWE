@@ -1,5 +1,5 @@
 9/21/2021
-This will provide a basic guide to getting LibsmolWE running and producing data that was used in "Stochastic rare event simulation demonstrates receptor triggeringby kinetic segregation is influenced by oligomerization andclose-contact mechanics" (Taylor, Allard, Read 2021)
+This will provide a basic guide to getting LibsmolWE running and producing data that was used in ["Stochastic rare event simulation demonstrates receptor triggeringby kinetic segregation is influenced by oligomerization andclose-contact mechanics" (Taylor, Allard, Read 2021)](https://www.biorxiv.org/content/10.1101/2021.09.29.462451v1)
 
 # Smoldyn
 First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html .
