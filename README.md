@@ -1,18 +1,28 @@
 9/21/2021
 This will provide a basic guide to getting LibsmolWE running and producing data that was used in "Stochastic rare event simulation demonstrates receptor triggeringby kinetic segregation is influenced by oligomerization andclose-contact mechanics" (Taylor, Allard, Read 2021)
 
-1. First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html .
+# Smoldyn
+First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html .
 	
-	a. You will need the complete distribution with source code, not the pre-compiled software.
+	* You will need the complete distribution with source code, not the pre-compiled software.
 	
-	b. The version of Smoldyn used in the paper is Smoldyn 2.62. Major changes to Smoldyn that might impact these results would be how Smoldyn handles 2D molecular reactions, specifically A+A <-> B reactions. Steve Andrews mentioned in Chapter 2 of his SmolEmulate document, that reaction rate functions have "several problems, some dating back to [the] original 2004 algorithms and some in new algorithms".
+	* The version of Smoldyn used in the paper is Smoldyn 2.62. Major changes to Smoldyn that might impact these results would be how Smoldyn handles 2D molecular reactions, specifically A+A <-> B reactions. Steve Andrews mentioned in Chapter 2 of his SmolEmulate document, that reaction rate functions have "several problems, some dating back to [the] original 2004 algorithms and some in new algorithms".
 	
-	c. The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
+	* The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
 	
-	d. Installation should install the libsmoldyn, smoldyn, smoldynconfigre, libsmoldyn_static.a and libsmoldyn_shared.dylib libraries to the users local folder so that Smoldyn can be called as a library.
+	* Installation should install the libsmoldyn, smoldyn, smoldynconfigre, libsmoldyn_static.a and libsmoldyn_shared.dylib libraries to the users local folder so that Smoldyn can be called as a library.
 	
-2. Update the makefile with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. This should create the executable "weSmoldyn".
-3. Update the parameters and bin definitions files. Specifically, these files are "binParams.txt", "corralsParams.txt", "dynamicsParams.txt", "WEParams.txt, "binDefinitions.txt".
+# Compiling
+
+Update the makefile with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. This should create the executable "weSmoldyn". 
+
+Before running weSmoldyn, set the LD_LIBRARY_PATH variable to the directory where libsmoldyn_static.a is located. e.g.
+	LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION/HERE/ 
+	export LD_LIBRARY_PATH
+
+# Simulation Parameters
+
+ Update the parameters and bin definitions files. Specifically, these files are "binParams.txt", "corralsParams.txt", "dynamicsParams.txt", "WEParams.txt, "binDefinitions.txt".
 	
 	a. Brief explanation for each line in the parameters
 	
@@ -82,7 +92,9 @@ This will provide a basic guide to getting LibsmolWE running and producing data 
 			
 			replaceFluxSims: If (1), then a replica that enters the flux bin will be replaced with a new replica initialized from the starting distribution (uniform molecule distribution). If (0), then a replica that enters the flux bin will have its weight proportionally redistributed to replicas that did not enter the flux bin. This value was 0 for all publication simulations EXCEPT for the close contacts (entryBit = 1 in dynamicsParams.txt), in which case the value was 1.
 
-4. After updating parameters, LibsmolWE can now be run using the following command line arguments:
+# Execution
+
+After updating parameters and exporting LD_LIBRARY_PATH, LibsmolWE can now be run using the following command line arguments:
 			
 			argv1: ending simfile (Somewhat of a misnomer, gives weight distribution across bins at given timesteps)
 			
