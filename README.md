@@ -8,8 +8,6 @@ First, the user will need to install Smoldyn from [http://www.smoldyn.org/downlo
 	
 * The version of Smoldyn used in the paper is Smoldyn 2.62. The code is currently updated to work with Smoldyn 2.66.
 	
-* The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
-	
 * Installation should install the libsmoldyn, smoldyn, smoldynconfigre, libsmoldyn_static.a and libsmoldyn_shared.dylib libraries to the users local folder so that Smoldyn can be called as a library.
 	
 # Compiling
