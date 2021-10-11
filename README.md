@@ -4,19 +4,20 @@ This will provide a basic guide to getting LibsmolWE running and producing data 
 # Smoldyn
 First, the user will need to install Smoldyn from http://www.smoldyn.org/download.html .
 	
-	* You will need the complete distribution with source code, not the pre-compiled software.
+* You will need the complete distribution with source code, not the pre-compiled software.
 	
-	* The version of Smoldyn used in the paper is Smoldyn 2.62. Major changes to Smoldyn that might impact these results would be how Smoldyn handles 2D molecular reactions, specifically A+A <-> B reactions. Steve Andrews mentioned in Chapter 2 of his SmolEmulate document, that reaction rate functions have "several problems, some dating back to [the] original 2004 algorithms and some in new algorithms".
+* The version of Smoldyn used in the paper is Smoldyn 2.62. Major changes to Smoldyn that might impact these results would be how Smoldyn handles 2D molecular reactions, specifically A+A <-> B reactions. Steve Andrews mentioned in Chapter 2 of his SmolEmulate document, that reaction rate functions have "several problems, some dating back to [the] original 2004 algorithms and some in new algorithms".
 	
-	* The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
+* The authors of LibsmolWE attempted to select reaction parameters that lie outside of the problematic regions mentioned in "SmolEmulateDoc.pdf", so hopefully minor changes have no impact on the results for 2d binding.
 	
-	* Installation should install the libsmoldyn, smoldyn, smoldynconfigre, libsmoldyn_static.a and libsmoldyn_shared.dylib libraries to the users local folder so that Smoldyn can be called as a library.
+* Installation should install the libsmoldyn, smoldyn, smoldynconfigre, libsmoldyn_static.a and libsmoldyn_shared.dylib libraries to the users local folder so that Smoldyn can be called as a library.
 	
 # Compiling
 
 Update the makefile with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. This should create the executable "weSmoldyn". 
 
 Before running weSmoldyn, set the LD_LIBRARY_PATH variable to the directory where libsmoldyn_static.a is located. e.g.
+
 	LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION/HERE/ 
 	export LD_LIBRARY_PATH
 
@@ -24,73 +25,73 @@ Before running weSmoldyn, set the LD_LIBRARY_PATH variable to the directory wher
 
  Update the parameters and bin definitions files. Specifically, these files are "binParams.txt", "corralsParams.txt", "dynamicsParams.txt", "WEParams.txt, "binDefinitions.txt".
 	
-	a. Brief explanation for each line in the parameters
+a. Brief explanation for each line in the parameters
 	
-		i. binDefinitions.txt: Contains the boundaries for each bin, given a WE order parameter of "number of molecules inside the ROI". The first number gives the left-most boundary for the first listed bin, the second number gives the upper boundary for the first listed bin / the lower boundary for the second listed bin, the third gives the upper boundary for the second listed bin / lower boundary for third listed bin, etc. WE is fairly robust to whichever bin definitions you intend to use, though definitions that allow for more replicas nearby the transient bins will tend to allow quicker convergence of flux values. A sample definition for 13 bins is included, and those definitions were used for all simulations where nPart = 256. Note the wide gap for the final bin, which is furthest from the transient bins.
+i. binDefinitions.txt: Contains the boundaries for each bin, given a WE order parameter of "number of molecules inside the ROI". The first number gives the left-most boundary for the first listed bin, the second number gives the upper boundary for the first listed bin / the lower boundary for the second listed bin, the third gives the upper boundary for the second listed bin / lower boundary for third listed bin, etc. WE is fairly robust to whichever bin definitions you intend to use, though definitions that allow for more replicas nearby the transient bins will tend to allow quicker convergence of flux values. A sample definition for 13 bins is included, and those definitions were used for all simulations where nPart = 256. Note the wide gap for the final bin, which is furthest from the transient bins.
 		
-		ii. binParams.txt
+ii. binParams.txt
 			
-			custom: Whether or not the user intends to use the custom bins in "binDefinitions.txt". If this is 0 then these files are ignored. Publication value was 1.
+custom: Whether or not the user intends to use the custom bins in "binDefinitions.txt". If this is 0 then these files are ignored. Publication value was 1.
 			
-			binDims: Number of dimensions for the order parameters. Currently this should only be set to binDims = 1.
+binDims: Number of dimensions for the order parameters. Currently this should only be set to binDims = 1.
 			
-			nBins: Clarifies the number of bins to use in the custom bins. This should be equal to n-1, where n is the number of lines of binDefinitions.txt
+nBins: Clarifies the number of bins to use in the custom bins. This should be equal to n-1, where n is the number of lines of binDefinitions.txt
 		
-		iii. corralsParams.txt: Corrals are currently in an alpha version and as such that functionality is not currently used to produce data in any publications. Results from this functionality have NOT been confirmed through any brute force analysis / analytic analysis / other methods.
+iii. corralsParams.txt: Corrals are currently in an alpha version and as such that functionality is not currently used to produce data in any publications. Results from this functionality have NOT been confirmed through any brute force analysis / analytic analysis / other methods.
 			
-			corralsBit: 1 enables corrals functionality, 0 disables it.
+corralsBit: 1 enables corrals functionality, 0 disables it.
 			
-			corralsWidth: Specifies the width of the corrals created. Corrals are squares tiled, with the center corral being a square with width corralsWidth centered at the origin.
+corralsWidth: Specifies the width of the corrals created. Corrals are squares tiled, with the center corral being a square with width corralsWidth centered at the origin.
 			
-			corralsRate: Specifies the probabilistic rate that molecules are allowed to pass through the corrals with.
+corralsRate: Specifies the probabilistic rate that molecules are allowed to pass through the corrals with.
 		
-		iv. dynamicsParams.txt
+iv. dynamicsParams.txt
 			
-			dt: Timestep for Smoldyn dynamics simulations. dt = 0.000001 (10^-6) was used. Units of characteristic timescale of system (t*)
+dt: Timestep for Smoldyn dynamics simulations. dt = 0.000001 (10^-6) was used. Units of characteristic timescale of system (t*)
 			
-			worldL: Length of square domain, units of the characteristic length scale (L*) of system. Publication values ranged from 3 to 5.333.
+worldL: Length of square domain, units of the characteristic length scale (L*) of system. Publication values ranged from 3 to 5.333.
 			
-			roiR: Radius of ROI, units of the characteristic length scale of the system (L*). Publication value was always 1.
+roiR: Radius of ROI, units of the characteristic length scale of the system (L*). Publication value was always 1.
 			
-			difM: Monomer diffusion coefficient. Units of L*^2/t*. Publication value was always 1.
+difM: Monomer diffusion coefficient. Units of L*^2/t*. Publication value was always 1.
 			
-			difD: Dimer diffusion coefficient. Units of L*^2/t*. Publication value was always 0.5.
+difD: Dimer diffusion coefficient. Units of L*^2/t*. Publication value was always 0.5.
 			
-			bindR: Binding radius of monomers. Units of L*. Publication value was 0.001 (10^-3)
+bindR: Binding radius of monomers. Units of L*. Publication value was 0.001 (10^-3)
 			
-			unbindK: Unbinding rate of dimers. Units of 1/t*. Publication values ranged from 10^-3 to 10^6.
+unbindK: Unbinding rate of dimers. Units of 1/t*. Publication values ranged from 10^-3 to 10^6.
 			
-			nPart: Maximum number of monomers in the system. Publication values ranged from 2 to 256.
+nPart: Maximum number of monomers in the system. Publication values ranged from 2 to 256.
 			
-			reactBit: Bit that enables (1) or disables (0) chemical reactions between monomers.
+reactBit: Bit that enables (1) or disables (0) chemical reactions between monomers.
 			
-			entryBit: Bit that enables (1) or disables (0) probabilistic reentry from close contacts.
+entryBit: Bit that enables (1) or disables (0) probabilistic reentry from close contacts.
 			
-			entryRate: Probabilistic rate that molecules are allowed to enter into the ROI from outside the ROI. Publication values ranged from 0 to 1.
+entryRate: Probabilistic rate that molecules are allowed to enter into the ROI from outside the ROI. Publication values ranged from 0 to 1.
 
-			densityBit: When this value is > 0, the worldL given above will be ignored and recalculated based off of nPart (line 8) and density (line 13)
+densityBit: When this value is > 0, the worldL given above will be ignored and recalculated based off of nPart (line 8) and density (line 13)
 			
-			density: When densityBit is > 0, this value is used to calculate a new world L based off of nPart. worldL = sqrt(nPart/density). Units of number of molecules per L*^2.
+density: When densityBit is > 0, this value is used to calculate a new world L based off of nPart. worldL = sqrt(nPart/density). Units of number of molecules per L*^2.
 			
-			monomerStart: If react bit is 1, replicas will either be initialized with purely monomeric (1) solutions with nPart monomers or purely dimeric (0) solutions with nPart/2 dimers.
+monomerStart: If react bit is 1, replicas will either be initialized with purely monomeric (1) solutions with nPart monomers or purely dimeric (0) solutions with nPart/2 dimers.
 		
-		v. WEParams.txt
+v. WEParams.txt
 			
-			tau: Gives the integer number of Smoldyn timesteps (dt in dynamicsParams.txt) to execute in between WE flux measurement / splitting + merging. Publication value was 50. Units of dt.
+tau: Gives the integer number of Smoldyn timesteps (dt in dynamicsParams.txt) to execute in between WE flux measurement / splitting + merging. Publication value was 50. Units of dt.
 			
-			repsPerBin: AKA mtarg. The number of replicas to maintain in each bin through the splitting / merging process. Publication values ranged from 100 to 200.
+repsPerBin: AKA mtarg. The number of replicas to maintain in each bin through the splitting / merging process. Publication values ranged from 100 to 200.
 			
-			initialReps: Number of unique replicas to initialize the WE simulation with. These replicas are drawn from a distribution where each molecule is uniformly distributed throughout the entire domain.
+initialReps: Number of unique replicas to initialize the WE simulation with. These replicas are drawn from a distribution where each molecule is uniformly distributed throughout the entire domain.
 			
-			tauMax: Maximum number of WE steps to use. Only used if FIXEDTIME is defined as 1 in weSmoldyn.h, otherwise simulations run until either the KS tests are passed (see KSTest in weSmoldyn.c) or 250000 seconds of combined computation time has been used. Publication value was 12000, though FIXEDTIME was 0 in all sims for publication. EVEN WITH FIXEDTIME = 0, THIS PARAMETER IS STILL USED: tauMax defines some "default burn in" times that the system will wait for before beginning measurements. For example, when measuring monomerization fractions, the "mCountsWeighted" constitutes a running average that starts after 1/2 of this time has passed.
+tauMax: Maximum number of WE steps to use. Only used if FIXEDTIME is defined as 1 in weSmoldyn.h, otherwise simulations run until either the KS tests are passed (see KSTest in weSmoldyn.c) or 250000 seconds of combined computation time has been used. Publication value was 12000, though FIXEDTIME was 0 in all sims for publication. EVEN WITH FIXEDTIME = 0, THIS PARAMETER IS STILL USED: tauMax defines some "default burn in" times that the system will wait for before beginning measurements. For example, when measuring monomerization fractions, the "mCountsWeighted" constitutes a running average that starts after 1/2 of this time has passed.
 			
-			nBins: Primarily useful if there are no custom bin definitions. When there aren't custom bin definitions, this should be equal to nPart in dynamicsParams.txt.
+nBins: Primarily useful if there are no custom bin definitions. When there aren't custom bin definitions, this should be equal to nPart in dynamicsParams.txt.
 			
-			fluxBin: Specifies which bin should be used for measuring flux into. This was always 0 in publication.
+fluxBin: Specifies which bin should be used for measuring flux into. This was always 0 in publication.
 			
-			ksNT: How many WE steps should pass before the first KS test is used. This value was always 300 in publication.
+ksNT: How many WE steps should pass before the first KS test is used. This value was always 300 in publication.
 			
-			replaceFluxSims: If (1), then a replica that enters the flux bin will be replaced with a new replica initialized from the starting distribution (uniform molecule distribution). If (0), then a replica that enters the flux bin will have its weight proportionally redistributed to replicas that did not enter the flux bin. This value was 0 for all publication simulations EXCEPT for the close contacts (entryBit = 1 in dynamicsParams.txt), in which case the value was 1.
+replaceFluxSims: If (1), then a replica that enters the flux bin will be replaced with a new replica initialized from the starting distribution (uniform molecule distribution). If (0), then a replica that enters the flux bin will have its weight proportionally redistributed to replicas that did not enter the flux bin. This value was 0 for all publication simulations EXCEPT for the close contacts (entryBit = 1 in dynamicsParams.txt), in which case the value was 1.
 
 # Execution
 
