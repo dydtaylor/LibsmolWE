@@ -33,7 +33,7 @@ and replace `YOUR_LIBRARY_LOCATION` with the location of libsmoldyn_shared.so (o
 sudo find / -name libsmoldyn_shared.so
 ```
 
-Second, prior to every execution you need to set your library path variable: use the following commands to do so:
+Second, prior to every execution you need to set your library path variable. Use the following commands to do so:
 
 ```
 LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION
