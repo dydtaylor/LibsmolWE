@@ -1,3 +1,3 @@
 custom	1
 binDims	1
-nBins	54
+nBins	13

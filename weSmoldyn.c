@@ -189,10 +189,23 @@ double fluxes(){
 /*
 !---------------------------------------------------------------------------------------------------------------------
 !		Description:
-!			Measures weight inside flux bin, frees sims in flux bin, readjusts weights of all other sims to sum to 1
+!			Measures weight inside flux bin, frees sims in flux bin, readjusts weights of all other sims to sum to 1.
+!			The method of reintroducing the flux weight is dependent on the parameter paramsWe.replaceFluxSims
 !		Method:
 !			Counts number of replicas in flux bin. If there is at least one, do the following:
-!				1. 
+!				1. First measures total weight in the system and if the DEBUGGING flag is true then it will output 
+!					when the weight inside the system deviates from 1 by more than 1e-6.
+!				2. If there are replicas in the flux bin, begin the weight replacement process.
+!					a. If fluxSims are replaced, then each replica that gets replaced has it's flux added to the total
+!						for the step. The replica is then freed and replaced with a freshly initialized replica.
+!					b. If flux sims are not replaced, the sims are freed and the weight of the remaining replicas is
+!						scaled by the flux removed.
+!				3. The binContents matrix and other indexing is tracked in the if/else statements inside the
+!					if(nFlux>0) loop. As the number of replicas, Reps.iSimMax, changes in this step by a varying
+!					amount, reorganizing the binContents matrix and binLocs matrices requires care. 
+!						E.g. Much of the code uses iSimMax as an index of a specific replica. If iSimMax = n
+!						if iSimMax-10 is in the	flux bin and removed, iSimMax reduces to n-1
+!						and now the replica at n needs to be moved to an index j<=n-1
 !---------------------------------------------------------------------------------------------------------------------
 */
 	double fluxOut = 0;
@@ -239,7 +252,7 @@ double fluxes(){
 						iSim = -1;
 					}
 				}
-				//Pretty sure these next few lines should be uncommented out to deal with edge case where iSimMax is in the flux bin
+				//Deals with edge case where iSimMax is in the flux bin
 				
 				if(Reps.binContents[iReps][paramsWe.fluxBin]== Reps.iSimMax-1){
 					simA=Reps.iSimMax-1;
@@ -265,9 +278,12 @@ double fluxes(){
 		}
 		}
 	}
+	if(paramsWe.replaceFluxSims==0){
 	for(iReps = 0; iReps < nFlux; iReps++){
+		
 				Reps.iSimMax--;
 				Reps.binContentsMax[paramsWe.fluxBin]--;
+		}
 	}
 	
 	if( Reps.binContentsMax[paramsWe.fluxBin] != 0){
@@ -287,6 +303,19 @@ double fluxes(){
 	return fluxOut;
 }
 void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
+	/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Loads simulation parameters from text files: "dynamicsParams.txt", "WEParams.txt", "corralsParams.txt".
+!		Notes:
+!			Bin parameters are not handled in these params. Bin parameters are also separate from WEParams.txt. Bin
+!			parameters handled in loadBinDefs(), see below. Many roi parameters are hard coded in, such as the
+!			the center of the ROI being at the origin and the origin signifying the region inside the compartment.
+!			the value hard-coded as 30 is for drawing purposes. There is no drawing for WE, so this is unimportant.
+!		Method:
+!			1. Scan text files and give values to global variables defined in weSmoldyn.h.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	char tmpStr[32];
 	int jBin;
 	
@@ -335,6 +364,7 @@ void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
 	topRightCornerRect[0] = paramsDe.worldLength/2;
 	topRightCornerRect[1] = paramsDe.worldLength/2;
 	topRightCornerRect[2] = -paramsDe.worldLength;
+	//
 	roiParams[0] = 0.0;
 	roiParams[1] = 0.0;
 	roiParams[2] = paramsDe.roiR;
@@ -350,7 +380,18 @@ void getParams(FILE *DEFile, FILE *WEFile, FILE *CorralsFile){
 }
 
 void loadBinDefs(){
-	
+	/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Uses the "binParams.txt" and "binDefinitions.txt" files to load user-defined bin definitions. 
+!		Notes:
+!			If there are no custom bins, then the bins will either range from 0 to paramsDe.nPart.
+!		Method:
+!			1. Load the files
+!			2. Change the binDefs struct to account for the custom bin definitions. Update paramsWe.nBins / Reps.nBins
+!				to account for this.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	char tmpChar[32];
 	int iBinDef;
 	FILE *binDefinitions, *binParams;
@@ -373,6 +414,27 @@ void loadBinDefs(){
 
 
 void KSTest(FILE *FluxFile, int nWE){
+	/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Performs a simplified KS test as well as a modified KS test on the middle third and final third of the data 
+!			that has been measured so far. If certain accuracy standard have been met then this will stop the WE sim
+!		Notes:
+!			Modified KS test involves performing a KS test with "duplicated" zeros removed from both the middle third
+!			and the final third of data. The requirement for this KS test is much less strict than the simple KS.
+!			If there are not enough non-zero measurements then the results of the KS test will be ignored / the 
+!			test will fail automatically.
+!		Method:
+!			1. Clear old data from previous run of the function
+!			2. Load flux measurements from the FluxFile.
+!			3. Create histogram bins based on the range of flux values loaded
+!			4. Sort flux measurements into histogram bins
+!			5. Create modified histogram with excess zeroes removed.
+!			6. Perform a KS test on the two histograms
+!			7. Print results of KS test to file, "ksOut.txt" and "dualKS.txt"
+!			8. Set fluxCDF.nT to double its value. fluxCDF.nT gives the WE step that the next ks test is performed at.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	FILE *KSFile, *dKSFile; //, *debugKS;
 	int iLine, iBin, zeroCounts[3];
 	double binStep, cdf1, cdf2, ksStat, dualCDF1, dualCDF2, dualKS;
@@ -517,12 +579,15 @@ void bin1Entropy(int nWE){
 !---------------------------------------------------------------------------------------------------------------------
 !		Description:
 !			Measures entropy and number of splits occurring in bin1 (bin next to flux bin at time of writing)
+!		Notes:
+!			As of 9/21/21 this function is not used for any data published by R. Taylor
 !		Method:
 !			Gathers number of splits from ending replicas - number of current replicas. Calculates entropy through
 !			S = - sum(pi * log(pi)), except to keep loops minimized the calculation is rewritten as
 !			S = - 1/wT * sum(wi * log(wi)) + log(wT), where pi = wi/wT, wT = sum(wi), and wi is the weight of a rep.
 !			After calculation appends the timestep, number of splits, and entropy to a text file.
 !			nSplits < 0 means that there will be merging rather than splitting in the next split merge step
+!		
 !---------------------------------------------------------------------------------------------------------------------
 */
 	FILE *binFile;
@@ -549,6 +614,8 @@ void evacuatedParticles(){
 !---------------------------------------------------------------------------------------------------------------------
 !		Description:
 !			Measures particle locations + replica weights for systems in flux bin
+!		Notes:
+!			As of 9/21/21 this function is not used for any data published by R. Taylor.
 !		Method:
 !			For each sim in the flux bin, write its weight + monomer locations to 1 file and weight + dimer locations
 !			to another file.
@@ -630,6 +697,19 @@ void saveWE(){
 }
 
 void loadWE(){
+/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Uses previous savestate file to initialize the WE simulation. 
+!		Notes:
+!			This only executes if a command-line argument, the load bit, is set to 1, though the function itself does
+!			not reference it.
+!		Method:
+!			1. Reads the savestate file for each replica. Creates a new empty replica with no molecules inside
+!			2. Gives the empty sim the WE weight given by the savestate
+!			3. Adds molecules to the sim at the locations given by the savestate.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	FILE *stateFile;
 	char tmpStr[32];
 	int iSim, nMonomers, nDimers,iMol;
@@ -665,6 +745,33 @@ void loadWE(){
 }
 
 int main(int argc, char *argv[]){
+	/*
+!---------------------------------------------------------------------------------------------------------------------
+!		Description:
+!			Main WE function. Intakes command-line arguments, reads the parameters files, initializes the sims, 
+!			writes to files. Additionally tracks things like monomerization fraction, time elapsed.
+!		Notes:
+!			argv1: ending simfile (Somewhat of a misnomer, gives weight distribution across bins at given timesteps)
+!			argv2: flux file. Appended to every WE timestep with the flux measured in that timestep
+!			argv3: Seed/error file. Outputs the ISEED used + miscellaneous errors that I wanted to output here.
+!			argv4: Save / replace RNG bit. If this is 1 then the RNG seed is saved / ISEED does not increment. If 0
+!					then it increments according to twister.c
+!			argv5: Execution time file. Outputs, in order: 1. Time spent creating initial distribution 2. All time
+!					spent in the WE splitting/merging 3. All time spent in Smoldyn dynamics 4. Total time of 
+!					WE/Dyanamics 5. Time spent creating the savestate
+!			argv6: Load sim bit. If 1, then savestate.txt is referenced to load the previous savestate, if 0 then
+!					this initializes a new WE sim.
+!		Method:
+!			1. Initialize everything
+!			2. begin WE simulation loop:
+!				a. Records fluxes
+!				b. Records KS statistics
+!				c. Execute WE splitting and merging
+!				d. Execute Smoldyn dynamics for each replica. Update bin locations. Update continuing monomerization
+!					fractions
+!			3. Record all to files.
+!---------------------------------------------------------------------------------------------------------------------
+*/
 	//argv 1: ending simfile, argv2: flux file, argv3: seed / error file, argv4: save / replace rng bit argv5: Execution time file argv6: Load Sim Bit (1 = load savestate.txt)
 	//dynamics params: dt, L, R, D, N
 	//WE Params: tau, mTarg, tauMax, nBins, ((flux bin))
@@ -673,7 +780,7 @@ int main(int argc, char *argv[]){
 	clock_t start[5], stop[5]; //initialDistTime, splitMergeTime, dynamicsTime, totalTime, saveTime, this also corresponds to the order written in the output file
 	char fileReader;
 	//Load simulation / WE parameters from outside files
-	FILE *DEFile, *WEFile, *CorralsFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile;
+	FILE *DEFile, *WEFile, *CorralsFile, *FLFile, *SIMFile, *errFile, *clockFile, *mCountsFile, *structStoreFile, *structNANFile, *debugFile, *mCountsWeightedFile, *binTimeSeriesFile;
 
 	char *fluxFileStr;
 	if(1){ //the only reason this exists is so that i can minimize this part while editing
@@ -745,7 +852,7 @@ int main(int argc, char *argv[]){
 	fclose(debugFile);
 	}
 	//Set other key initial values in replicas struct
-	for(int iBin = 0; iBin < Reps.nBins; iBin++){
+	for(iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 	}
 	for(iSim = 0; iSim < paramsWe.nInit; iSim++){
@@ -759,6 +866,12 @@ int main(int argc, char *argv[]){
 
 	start[3] = clock();
 	}
+	
+	/*As of right now, I want to set up some structure to measure how monomerization fraction 
+	and distribution of bin weights changes over time. For each bin, I am going to create an 
+	output file that records the monomerization fraction, weight inside the bins, at each tau step
+	That is many files, and the amount of files changes based on the number of bins*/
+	
 	//Simulation Loop
 	for(nWE = nWEstart-1; nWE < tauMax; nWE++){
 		if(nWE > nWEstart || !loadBit){
@@ -781,6 +894,19 @@ int main(int argc, char *argv[]){
 				fclose(debugFile);
 			}
 		}
+			
+			//Makeshift bug fix when paramsWe.replaceFluxSims==1
+			if(paramsWe.replaceFluxSims==1){
+						for( iBin = 0; iBin < Reps.nBins; iBin++){
+			Reps.binContentsMax[iBin] = 0;
+		}
+		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
+
+			Reps.binLocs[iSim] = findBin(Reps.sims[iSim]);
+			Reps.binContents[Reps.binContentsMax[Reps.binLocs[iSim]]][Reps.binLocs[iSim]] = iSim;
+			Reps.binContentsMax[Reps.binLocs[iSim]]++;
+	}
+			}
 		
 		//Single Step Time Measurement
 		
@@ -898,7 +1024,7 @@ int main(int argc, char *argv[]){
 		}
 		
 		//Dynamics and rebuilding BCM
-		for(int iBin = 0; iBin < Reps.nBins; iBin++){
+		for( iBin = 0; iBin < Reps.nBins; iBin++){
 			Reps.binContentsMax[iBin] = 0;
 		}
 		for(iSim = 0; iSim < Reps.iSimMax; iSim++){
@@ -927,7 +1053,42 @@ int main(int argc, char *argv[]){
 			}
 	}
 		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		//Record weight distribution among bins
+		binTimeSeriesFile = fopen("timeSeries.txt","a");
+		double mCountTemp, weightTemp,simTimeTemp;
+		for(iBin = 0; iBin < Reps.nBins; iBin++){
+			weightTemp = 0;
+			mCountTemp = 0;
+			simTimeTemp = nWE;
+			for(iSim=0; iSim < Reps.binContentsMax[iBin];iSim++){
+				weightTemp += Reps.weights[Reps.binContents[iSim][iBin]];
+				mCountTemp += (double) Reps.sims[Reps.binContents[iSim][iBin]]->mols->nl[0] * Reps.weights[Reps.binContents[iSim][iBin]];
+			}
+			fprintf(binTimeSeriesFile,"%d %f %f %d \n", iBin, weightTemp, mCountTemp/(weightTemp*paramsDe.nPart), nWE);
+		}
+		
+		fclose(binTimeSeriesFile);
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		if(tauMax >= 1000){
 		if( (nWE+1) % (tauMax/1000) == 0 || nWE < 1000){
 			bin1Entropy(nWE);

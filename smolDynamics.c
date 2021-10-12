@@ -71,7 +71,7 @@ void initialDist(int nInit){
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[jSim], "bounds", PSrect, NULL, "+y", topRightCornerRect);
-		smolSetSurfaceAction(Reps.sims[jSim], "bounds", PFboth, "all", MSall, SAreflect);
+		smolSetSurfaceAction(Reps.sims[jSim], "bounds", PFboth, "all", MSall, SAreflect, NULL);
 		
 		//Corrals
 		/*To calculate nCorrals:
@@ -99,7 +99,7 @@ void initialDist(int nInit){
 			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
 			smolAddPanel(Reps.sims[jSim],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
 		}
-		smolSetSurfaceAction(Reps.sims[jSim],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceAction(Reps.sims[jSim],"corrals",PFboth,"all",MSall,SAtrans, NULL);
 		smolSetSurfaceRate(Reps.sims[jSim],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
 		smolSetSurfaceRate(Reps.sims[jSim],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
 		}
@@ -109,11 +109,11 @@ void initialDist(int nInit){
 		smolAddSurface(Reps.sims[jSim], "roi");
 		smolAddPanel(Reps.sims[jSim],"roi", PSsph, NULL, "+0", roiParams);
 		if(!paramsDe.reentryRateBit){
-		smolSetSurfaceAction(Reps.sims[jSim], "roi", PFboth, "all", MSall, SAtrans);
+		smolSetSurfaceAction(Reps.sims[jSim], "roi", PFboth, "all", MSall, SAtrans, NULL);
 		}
 		if(paramsDe.reentryRateBit){
-			smolSetSurfaceAction(Reps.sims[jSim], "roi", PFback, "all", MSall, SAtrans);
-			smolSetSurfaceAction(Reps.sims[jSim], "roi", PFfront, "all", MSall, SAreflect);
+			smolSetSurfaceAction(Reps.sims[jSim], "roi", PFback, "all", MSall, SAtrans, NULL);
+			smolSetSurfaceAction(Reps.sims[jSim], "roi", PFfront, "all", MSall, SAreflect, NULL);
 			smolSetSurfaceRate(Reps.sims[jSim], "roi", "all", MSsoln, MSsoln, MSbsoln, paramsDe.reentryRate, NULL, 1);
 		}
 		smolAddCompartment(Reps.sims[jSim],"roiComp");
@@ -277,7 +277,7 @@ void copySim1(int simIn, int simOut){
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
-		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
+		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect, NULL);
 		
 		if(paramsDe.corralsBit){
 		nCorrals = floor((paramsDe.worldLength - paramsDe.corralWidth)/(2*paramsDe.corralWidth))+1;
@@ -295,7 +295,7 @@ void copySim1(int simIn, int simOut){
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
 		}
-		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans, NULL);
 		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
 		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
 		}
@@ -303,11 +303,11 @@ void copySim1(int simIn, int simOut){
 	smolAddSurface(Reps.sims[simOut], "roi");
 	smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);
 		if(!paramsDe.reentryRateBit){
-		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans);
+		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans, NULL);
 		}
 		if(paramsDe.reentryRateBit){
-			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans);
-			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans, NULL);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect, NULL);
 			smolSetSurfaceRate(Reps.sims[simOut], "roi", "all", MSsoln, MSsoln, MSbsoln, paramsDe.reentryRate, NULL, 1);
 		}
 	smolAddCompartment(Reps.sims[simOut],"roiComp");
@@ -417,7 +417,7 @@ void buildEmptySim(int simOut){
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
 		}
-		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans, NULL);
 		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
 		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
 		}
@@ -427,16 +427,16 @@ void buildEmptySim(int simOut){
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
-		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
+		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect, NULL);
 		
 	smolAddSurface(Reps.sims[simOut], "roi");
 	smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);
 		if(!paramsDe.reentryRateBit){
-		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans);
+		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans, NULL);
 		}
 		if(paramsDe.reentryRateBit){
-			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans);
-			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans, NULL);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect, NULL);
 			smolSetSurfaceRate(Reps.sims[simOut], "roi", "all", MSsoln, MSsoln, MSbsoln, paramsDe.reentryRate, NULL, 1);
 		}
 	smolAddCompartment(Reps.sims[simOut],"roiComp");
@@ -512,7 +512,7 @@ void buildSingleSim(int simOut){
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "-y", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+x", botLeftCornerRect);
 		smolAddPanel(Reps.sims[simOut], "bounds", PSrect, NULL, "+y", topRightCornerRect);
-		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect);
+		smolSetSurfaceAction(Reps.sims[simOut], "bounds", PFboth, "all", MSall, SAreflect, NULL);
 		
 		//Corrals
 		/*To calculate nCorrals:
@@ -540,7 +540,7 @@ void buildSingleSim(int simOut){
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertAbove0 ); //Vertical panels to the right of origin
 			smolAddPanel(Reps.sims[simOut],"corrals",PSrect,NULL,"+x" ,panelVertBelow0 ); //Vertical panels to the left of origin
 		}
-		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans);
+		smolSetSurfaceAction(Reps.sims[simOut],"corrals",PFboth,"all",MSall,SAtrans, NULL);
 		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSsoln,MSbsoln,paramsDe.corralRate,NULL, 1);
 		smolSetSurfaceRate(Reps.sims[simOut],"corrals","all", MSsoln, MSbsoln,MSsoln,paramsDe.corralRate,NULL, 1);
 		}
@@ -550,11 +550,11 @@ void buildSingleSim(int simOut){
 		smolAddSurface(Reps.sims[simOut], "roi");
 		smolAddPanel(Reps.sims[simOut],"roi", PSsph, NULL, "+0", roiParams);
 		if(!paramsDe.reentryRateBit){
-		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans);
+		smolSetSurfaceAction(Reps.sims[simOut], "roi", PFboth, "all", MSall, SAtrans, NULL);
 		}
 		if(paramsDe.reentryRateBit){
-			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans);
-			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFback, "all", MSall, SAtrans, NULL);
+			smolSetSurfaceAction(Reps.sims[simOut], "roi", PFfront, "all", MSall, SAreflect, NULL);
 			smolSetSurfaceRate(Reps.sims[simOut], "roi", "all", MSsoln, MSsoln, MSbsoln, paramsDe.reentryRate, NULL, 1);
 		}
 		smolAddCompartment(Reps.sims[simOut],"roiComp");
