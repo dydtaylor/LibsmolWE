@@ -1,11 +1,8 @@
 # Weighted Ensemble simulation with Smoldyn stochastic reaction-diffusion engine
 
-This software allows stochastic rare events to be simulated and analyzed, to calculate their probabilities and mean first-passage time statistics, by combining the Weighted Ensemble method with the Smoldyn simulation engine.  
+This software simulates and analyzes stochastic rare events in particle-based reaction diffusion systems by combining the Weighted Ensemble method with the Smoldyn simulation engine.  
 
-Here we provide a basic guide to getting LibsmolWE running and producing data that was used in ["Stochastic rare event simulation demonstrates receptor triggeringby kinetic segregation is influenced by oligomerization and close-contact mechanics" (Taylor, Allard, Read 2021)](https://www.biorxiv.org/content/10.1101/2021.09.29.462451v1).
-See paper for more details on the biological system.
-
-
+For details, and information about biological system under simulation, see ["Stochastic rare event simulation demonstrates receptor triggeringby kinetic segregation is influenced by oligomerization and close-contact mechanics" (Taylor, Allard, Read 2021)](https://www.biorxiv.org/content/10.1101/2021.09.29.462451v1).
 
 
 ---
@@ -37,8 +34,11 @@ sudo find / -name libsmoldyn_shared.so
 ```
 
 Second, prior to every execution you need to set your library path variable: use the following commands to do so:
-	LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION
-	export LD_LIBRARY_PATH
+
+```
+LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION
+export LD_LIBRARY_PATH
+```
 
 In case you do not have sudo privileges, the libsmoldyn_shared.so file can be placed in any directory (or taken from the smoldyn-2.66/cmake directory). Just use one of those locations for YOUR_LIBRARY_LOCATION.
 
