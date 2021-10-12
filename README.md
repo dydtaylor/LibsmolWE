@@ -22,12 +22,42 @@ First, the user will need to install Smoldyn from [http://www.smoldyn.org/downlo
 
 ### 2. Compiling
 
-Update the makefile with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. This should create the executable "weSmoldyn".
+Update the `makefile` with your own Smoldyn library locations. The makefile uses dynamic linking rather than static. Linking properly has 2 steps.
 
-Before running weSmoldyn, set the LD_LIBRARY_PATH variable to the directory where libsmoldyn_static.a is located. e.g.
+First, you need to update the second line of the makefile. Edit
 
-	LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION/HERE/
+```
+gcc weSmoldyn.o -o weSmoldyn -L/YOUR_LIBRARY_LOCATION -lsmoldyn_shared -lm
+```
+
+and replace `YOUR_LIBRARY_LOCATION` with the location of libsmoldyn_shared.so (or libsmoldyn_shared.dylib libsmoldyn_shared.dll depending on OS). You can find this quickly on linux/mac with the command
+
+```
+sudo find / -name libsmoldyn_shared.so
+```
+
+Second, prior to every execution you need to set your library path variable: use the following commands to do so:
+	LD_LIBRARY_PATH=/YOUR/LIBRARY/LOCATION
 	export LD_LIBRARY_PATH
+
+In case you do not have sudo privileges, the libsmoldyn_shared.so file can be placed in any directory (or taken from the smoldyn-2.66/cmake directory). Just use one of those locations for YOUR_LIBRARY_LOCATION.
+
+This should create the executable `weSmoldyn`.
+
+## Quickstart
+
+If installation was successful, the following steps generate the mean first-passage time for evacuation for molecules undergoing simple diffusion.
+
+1. Execute the following via terminal / command line (in the folder with weSmoldyn, binDefinitions.txt, binParams.txt, corralsParams.txt, dynamicsParams.txt, ISEED, and WEParams.txt)
+
+	```
+	./weSmoldyn simState.txt simFluxes.txt simSeed.txt 0 simTime.txt 0
+	```
+
+2. After the weSmoldyn command has completed, to evaluate the data, run the MATLAB script `quickstart.m` in the same folder where the commands were executed. This will generate the estimate for the mean first-passage time.
+
+
+---
 
 ## Simulation Parameters
 
